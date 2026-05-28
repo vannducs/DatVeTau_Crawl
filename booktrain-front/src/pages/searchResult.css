@@ -1,0 +1,321 @@
+.search-result-page {
+    min-height: 100vh;
+    background: #f3f4f6;
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+}
+
+/* ===== Header tìm kiếm ===== */
+.search-result-header {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 16px 0;
+}
+
+.search-result-header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.search-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.search-route {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.route-arrow {
+    color: #2F6FED;
+}
+
+.search-date {
+    font-size: 14px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.btn-edit-search {
+    background: none;
+    border: 1px solid #2F6FED;
+    color: #2F6FED;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.btn-edit-search:hover {
+    background: #2F6FED;
+    color: white;
+}
+
+/* ===== Body ===== */
+.search-result-body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+}
+
+.search-result-main {
+    flex: 1;
+}
+
+/* ===== Sort bar ===== */
+.sort-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow-x: auto;
+}
+
+.sort-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-right: 8px;
+}
+
+.sort-btn {
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.sort-btn:hover {
+    border-color: #2F6FED;
+    color: #2F6FED;
+}
+
+.sort-btn--active {
+    background: #2F6FED;
+    border-color: #2F6FED;
+    color: white;
+    font-weight: 600;
+}
+
+/* ===== Kết quả ===== */
+.result-count {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+.result-count strong {
+    color: #111827;
+}
+
+.trip-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.result-status {
+    text-align: center;
+    padding: 60px;
+    font-size: 16px;
+    color: #6b7280;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.search-result-searchbox {
+    background: white;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Trong context này bỏ background image của search-section */
+.search-result-searchbox .search-section {
+    background: none;
+    padding: 0;
+}
+/* Search box ở đầu trang */
+.search-result-searchbox {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 24px;
+}
+
+/* Ẩn background image + tiêu đề khi dùng trong SearchResultPage */
+.search-result-searchbox .search-section {
+    background: none !important;
+    min-height: unset !important;
+    padding: 0 !important;
+}
+
+.search-result-searchbox .overlay {
+    padding: 0 !important;
+    background: none !important;
+}
+
+.search-result-searchbox h1,
+.search-result-searchbox p {
+    display: none !important; /* Ẩn tiêu đề "Đặt Vé Tàu Hỏa Online" */
+}
+
+/* Thanh info tuyến + ngày */
+.search-result-info-bar {
+    background: white;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.search-route-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.route-arrow {
+    color: #2F6FED;
+}
+
+.search-date-badge {
+    background: #eff6ff;
+    color: #2F6FED;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+/* Layout body */
+.search-result-page {
+    background: #f3f4f6;
+    min-height: 100vh;
+}
+
+.search-result-body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Bộ lọc bên trái */
+.search-filter {
+    width: 280px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    position: sticky;
+    top: 16px;
+}
+
+.filter-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.filter-section {
+    margin-bottom: 24px;
+}
+
+.filter-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.filter-hour-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.filter-hour-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    gap: 2px;
+}
+
+.filter-hour-btn:hover {
+    border-color: #2F6FED;
+    color: #2F6FED;
+}
+
+.filter-hour-btn--active {
+    background: #eff6ff;
+    border-color: #2F6FED;
+    color: #2F6FED;
+}
+
+.filter-hour-label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.filter-hour-sub {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.filter-hour-btn--active .filter-hour-sub {
+    color: #93c5fd;
+}
+
+/* Phần kết quả bên phải */
+.search-result-main {
+    flex: 1;
+    min-width: 0;
+}
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .search-result-body {
+        padding: 16px;
+        flex-direction: column;
+    }
+
+    .sort-bar {
+        gap: 6px;
+        padding: 10px 12px;
+    }
+}

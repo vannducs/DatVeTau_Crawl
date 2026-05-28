@@ -1,0 +1,232 @@
+/* ===== Account Page ===== */
+.account-page {
+    min-height: 100vh;
+    background: #f3f4f6;
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+    padding: 24px 40px 48px; /* 👈 tăng padding 2 bên */
+    box-sizing: border-box;
+}
+
+.account-breadcrumb {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.account-breadcrumb a {
+    color: #2F6FED;
+    text-decoration: none;
+}
+
+.account-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Layout ===== */
+.account-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ===== Sidebar ===== */
+.account-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: #374151;
+    font-size: 14px;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+    width: 100%;
+    background: none;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    font-family: inherit;
+    text-align: left;
+}
+
+.sidebar-item:hover {
+    background: #f0f5ff;
+    color: #2F6FED;
+}
+
+.sidebar-item--active {
+    background: #f0f5ff;
+    color: #2F6FED;
+    border-left: 3px solid #2F6FED;
+    font-weight: 600;
+}
+
+.sidebar-icon {
+    display: flex;
+    align-items: center;
+    color: #2F6FED;
+    flex-shrink: 0;
+}
+
+.sidebar-label {
+    flex: 1;
+}
+
+.sidebar-badge {
+    background: #ef4444;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 99px;
+}
+
+.sidebar-item--logout {
+    color: #ef4444;
+    border-top: 1px solid #f3f4f6;
+    margin-top: 4px;
+}
+
+.sidebar-item--logout .sidebar-icon {
+    color: #ef4444;
+}
+
+.sidebar-item--logout:hover {
+    background: #fff5f5;
+    color: #dc2626;
+}
+
+/* ===== Main Form ===== */
+.account-main {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    padding: 32px 48px; /* 👈 tăng padding trái phải */
+}
+
+.account-form {
+    max-width: 100%; /* 👈 đổi từ 600px → 100% */
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: #374151;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.required {
+    color: #ef4444;
+}
+
+.form-group input[type="text"],
+.form-group input[type="tel"],
+.form-group input[type="date"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #111827;
+    background: white;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2F6FED;
+}
+
+/* ===== Gender ===== */
+.gender-group {
+    display: flex;
+    gap: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.gender-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: white;
+    font-size: 14px;
+    font-family: inherit;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    border-right: 1px solid #d1d5db;
+}
+
+.gender-btn:last-child {
+    border-right: none;
+}
+
+.gender-btn:hover {
+    background: #f0f5ff;
+}
+
+.gender-btn--active {
+    background: #2F6FED;
+    color: white;
+    font-weight: 600;
+}
+
+/* ===== Divider & Save ===== */
+.form-divider {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 32px 0 24px;
+}
+
+.btn-save {
+    width: 100%;
+    padding: 12px;
+    background: #e5e7eb;
+    color: #9ca3af;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-save:hover {
+    background: #2F6FED;
+    color: white;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .account-layout {
+        flex-direction: column;
+    }
+
+    .account-sidebar {
+        width: 100%;
+    }
+}

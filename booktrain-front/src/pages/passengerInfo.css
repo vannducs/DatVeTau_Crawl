@@ -1,0 +1,483 @@
+.pi-loading {
+    text-align: center;
+    padding: 80px;
+    font-size: 16px;
+    color: #6b7280;
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+}
+
+/* ===== Steps ===== */
+.pi-steps {
+    background: #2F6FED;
+    padding: 14px 0;
+}
+
+.pi-steps-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pi-step {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+}
+
+.pi-step--active {
+    color: white;
+    font-weight: 700;
+}
+
+.pi-step--done {
+    color: rgba(255,255,255,0.9);
+}
+
+.pi-step-arrow {
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+}
+
+/* ===== Page Layout ===== */
+.pi-page {
+    background: #f3f4f6;
+    min-height: 100vh;
+    padding: 24px 0 48px;
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+}
+
+.pi-body {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+/* ===== Left Column ===== */
+.pi-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+/* Trip Info */
+.pi-trip-info {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.pi-trip-badge {
+    display: inline-block;
+    background: #2F6FED;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.pi-trip-route {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.pi-trip-station {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    flex-shrink: 0;
+}
+
+.pi-trip-time-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+}
+
+.pi-trip-time {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.pi-trip-duration {
+    font-size: 13px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+.pi-trip-train {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Section */
+.pi-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.pi-section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px;
+}
+
+.pi-section-hint {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 20px;
+}
+
+/* Passenger Card */
+.pi-passenger-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.pi-passenger-card:last-child { margin-bottom: 0; }
+
+.pi-passenger-header {
+    background: #f9fafb;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pi-passenger-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.pi-passenger-seat {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Form Grid */
+.pi-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+}
+
+.pi-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pi-form-group--full {
+    grid-column: 1 / -1;
+}
+
+.pi-form-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    text-align: left;
+}
+
+.pi-required { color: #ef4444; }
+
+.pi-form-group input {
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #111827;
+    transition: border-color 0.15s;
+    outline: none;
+}
+
+.pi-form-group input:focus {
+    border-color: #2F6FED;
+}
+
+.pi-input-error {
+    border-color: #ef4444 !important;
+}
+
+.pi-error-msg {
+    font-size: 12px;
+    color: #ef4444;
+}
+
+/* Submit button */
+.pi-submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: #FFC107;
+    color: #111827;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.pi-submit-btn:hover:not(:disabled) { background: #f5b800; }
+.pi-submit-btn:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+
+/* ===== Right Column ===== */
+.pi-right {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 16px;
+}
+
+.pi-summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.pi-summary-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.pi-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+
+.pi-summary-item-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.pi-summary-seat {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 400;
+}
+
+.pi-summary-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+}
+
+.pi-summary-divider {
+    border: none;
+    border-top: 1px solid #f3f4f6;
+    margin: 12px 0;
+}
+
+.pi-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.pi-summary-total-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+/* Badge giảm giá trong header card hành khách */
+.pi-discount-badge {
+    display: inline-block;
+    background: #16a34a;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+    letter-spacing: 0.3px;
+}
+
+/* Cột giá trong tóm tắt */
+.pi-summary-price-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+/* Giá gốc bị gạch ngang */
+.pi-summary-base-price {
+    font-size: 11px;
+    color: #9ca3af;
+    text-decoration: line-through;
+    white-space: nowrap;
+}
+
+/* Badge % giảm trong tóm tắt */
+.pi-summary-discount-badge {
+    display: inline-block;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+/* Popup xác nhận */
+.pi-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    animation: fadeIn 0.15s ease;
+}
+
+.pi-confirm-box {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    width: 90%;
+    max-width: 420px;
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+    animation: slideUp 0.2s ease;
+}
+
+.pi-confirm-box h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px;
+}
+
+.pi-confirm-box p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 16px;
+}
+
+.pi-confirm-summary {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pi-confirm-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #374151;
+}
+
+.pi-confirm-row--total {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 8px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.pi-confirm-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.pi-confirm-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.pi-confirm-btn--back {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.pi-confirm-btn--back:hover { background: #e5e7eb; }
+
+.pi-confirm-btn--ok {
+    background: #FFC107;
+    color: #111827;
+}
+
+.pi-confirm-btn--ok:hover { background: #f5b800; }
+
+.pi-autofill-notice {
+    background: #f0fdf4;
+    color: #16a34a;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #bbf7d0;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+/* Responsive */
+@media (max-width: 768px) {
+    .pi-body { flex-direction: column; }
+    .pi-right { width: 100%; position: static; }
+    .pi-form-grid { grid-template-columns: 1fr; }
+    .pi-form-group--full { grid-column: 1; }
+    .pi-trip-route { flex-direction: column; gap: 8px; }
+}

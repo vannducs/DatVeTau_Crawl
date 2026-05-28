@@ -1,0 +1,122 @@
+Followthis.md
+History.md
+Explaination.md
+Script_Database.txt
+# ===================
+# Common / OS Files
+# ===================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===================
+# IDE & Editor (root)
+# ===================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===================
+# Logs (global)
+# ===================
+*.log
+logs/
+
+# ===================
+# Environment & Secrets
+# ===================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# ===================
+# Database
+# ===================
+*.sql.gz
+database/
+*.db
+*.sqlite
+
+# ===================
+# Temp Files
+# ===================
+tmp/
+temp/
+*.tmp
+.cache/
+
+# ===================
+# ===== BACKEND =====
+# ===================
+booktrain-back/src/main/resources/application.properties
+booktrain-back/src/main/resources/application*.properties
+booktrain-back/src/main/resources/application*.yml
+booktrain-front/.env
+booktrain-back/target/
+booktrain-back/*.log
+
+# Maven wrapper (GIỮ LẠI file jar)
+!booktrain-back/.mvn/wrapper/maven-wrapper.jar
+
+# STS
+booktrain-back/.apt_generated
+booktrain-back/.classpath
+booktrain-back/.factorypath
+booktrain-back/.project
+booktrain-back/.settings
+booktrain-back/.springBeans
+booktrain-back/.sts4-cache
+
+# IntelliJ
+booktrain-back/.idea
+booktrain-back/*.iws
+booktrain-back/*.iml
+booktrain-back/*.ipr
+
+# NetBeans
+booktrain-back/nbproject/private/
+booktrain-back/nbbuild/
+booktrain-back/dist/
+booktrain-back/nbdist/
+booktrain-back/.nb-gradle/
+booktrain-back/build/
+
+# VS Code
+booktrain-back/.vscode/
+
+# ===================
+# ===== FRONTEND =====
+# ===================
+
+booktrain-front/node_modules/
+booktrain-front/dist/
+booktrain-front/dist-ssr/
+
+# Logs
+booktrain-front/logs/
+booktrain-front/*.log
+booktrain-front/npm-debug.log*
+booktrain-front/yarn-debug.log*
+booktrain-front/yarn-error.log*
+booktrain-front/pnpm-debug.log*
+booktrain-front/lerna-debug.log*
+
+# Env
+booktrain-front/*.local
+
+# IDE
+booktrain-front/.vscode/
+!booktrain-front/.vscode/extensions.json
+booktrain-front/.idea/
+
+# Misc
+booktrain-front/*.suo
+booktrain-front/*.ntvs*
+booktrain-front/*.njsproj
+booktrain-front/*.sln
+booktrain-front/*.sw?

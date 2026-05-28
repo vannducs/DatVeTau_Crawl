@@ -1,0 +1,135 @@
+.popular-routes {
+  background: #f9fafb;
+  padding: 40px 24px;
+  font-family: "Google Sans Flex", system-ui, sans-serif;
+}
+
+.popular-routes-header {
+  max-width: 1126px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.popular-routes-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  font-family: "Google Sans Flex", system-ui, sans-serif;
+}
+
+.popular-routes-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(.disabled) {
+  background: #2F6FED;
+  border-color: #2F6FED;
+  color: white;
+}
+
+.nav-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.popular-routes-track {
+  max-width: 1126px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.route-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.route-card:hover {
+  border-color: #2F6FED;
+  box-shadow: 0 4px 12px rgba(47, 111, 237, 0.15);
+}
+
+.route-path {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+  font-family: "Google Sans Flex", system-ui, sans-serif;
+}
+
+.route-arrow {
+  color: #9ca3af;
+  margin: 0 6px;
+}
+
+.route-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.price-sale {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.price-original {
+  font-size: 13px;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.route-book-btn {
+  width: 100%;
+  background: #FFC107;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  font-family: "Google Sans Flex", system-ui, sans-serif;
+  transition: background 0.15s;
+}
+
+.route-book-btn:hover {
+  background: #ffca2c;
+}
+
+@media (max-width: 900px) {
+  .popular-routes-track {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .popular-routes-track {
+    grid-template-columns: 1fr;
+  }
+}

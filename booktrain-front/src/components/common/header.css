@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;700&display=swap');
+
+.header {
+    background: #2F6FED;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: 'Google Sans Flex', system-ui, sans-serif;
+    /* Full viewport width when parent (#root) is narrower than the screen */
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    box-sizing: border-box;
+}
+
+.header-banner {
+    border-bottom: 1px solid #2563EB;
+    padding: 8px 0;
+    font-size: 14px;
+    text-align: center;
+}
+
+.header-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    background: #FFC107;
+    color: #2F6FED;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.header-nav a:hover {
+    color: #FFC107;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-icon:hover {
+    background: #2563EB;
+}
+
+.btn-icon .icon {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-hotline {
+    background: white;
+    color: #2F6FED;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+    font-family: inherit;
+}
+
+.btn-hotline:hover {
+    background: #f3f4f6;
+}
+
+.btn-hotline .icon-phone {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-login {
+    background: transparent;
+    color: white;
+    border: 1px solid white;
+    padding: 8px 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+    font-family: inherit;
+}
+
+.btn-login:hover {
+    background: #2563EB;
+}
+
+@media (max-width: 1024px) {
+    .header-nav {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .header-banner p {
+        font-size: 12px;
+    }
+
+    .btn-hotline .btn-text {
+        display: none;
+    }
+}
+
+/* ======= User Menu ======= */
+.logo {
+    text-decoration: none;
+}
+
+.btn-register {
+    background: #FFC107;
+    color: #2F6FED;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+    font-family: inherit;
+    text-decoration: none;
+}
+
+.btn-register:hover {
+    background: #f5c200;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.btn-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 7px 14px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.btn-user:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    min-width: 200px;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.15s ease-out;
+    z-index: 100;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-dropdown-item {
+    display: block;
+    padding: 12px 16px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.15s;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.user-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.user-dropdown-item:hover {
+    background: #f9fafb;
+    color: #2F6FED;
+}
+
+.user-dropdown-item--btn {
+    width: 100%;
+    text-align: center;         
+    background: none;
+    border: none;
+    padding: 12px 16px;       
+    font-size: 14px;
+    font-family: inherit;       
+    cursor: pointer;
+    display: block;
+    color: #e53e3e;   
+    border-bottom: none;        
+}
+
+.user-dropdown-item--btn:hover {
+    color: #dc2626;
+}
+
+.btn-logout {
+    background: none;
+    border: none;
+    color: white;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.btn-logout:hover {
+    background: rgba(255,255,255,0.2);
+}

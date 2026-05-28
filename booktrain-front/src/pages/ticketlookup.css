@@ -1,0 +1,527 @@
+.tl-page {
+    min-height: 100vh;
+    background: #F3F4F6;
+    display: flex;
+    flex-direction: column;
+}
+
+.tl-main {
+    flex: 1;
+    padding-bottom: 48px;
+}
+
+/* ── Hero ───────────────────────────────────────────── */
+.tl-hero {
+    background: linear-gradient(135deg, #1a3a6e 0%, #2F6FED 100%);
+    padding: 40px 16px 56px;
+    text-align: center;
+    color: #fff;
+}
+
+.tl-hero-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.tl-hero-sub {
+    font-size: 15px;
+    opacity: 0.85;
+    margin: 0;
+}
+
+/* ── Card wrapper ────────────────────────────────────── */
+.tl-card-wrap {
+    max-width: 680px;
+    margin: -28px auto 0;
+    padding: 0 16px;
+}
+
+.tl-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+    padding: 28px 28px 24px;
+}
+
+/* ── Method tabs ─────────────────────────────────────── */
+.tl-methods {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #E5E7EB;
+    padding-bottom: 0;
+}
+
+.tl-method-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6B7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s;
+    border-radius: 4px 4px 0 0;
+}
+
+.tl-method-btn.active {
+    color: #2F6FED;
+    font-weight: 700;
+    border-bottom-color: #2F6FED;
+}
+
+.tl-method-btn .material-icons-round {
+    font-size: 18px;
+}
+
+/* ── Input row ───────────────────────────────────────── */
+.tl-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.tl-input {
+    flex: 1;
+    height: 46px;
+    border: 1.5px solid #D1D5DB;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+    text-transform: uppercase;
+}
+
+.tl-input:focus {
+    border-color: #2F6FED;
+}
+
+.tl-input::placeholder {
+    text-transform: none;
+    color: #9CA3AF;
+}
+
+.tl-btn-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 46px;
+    padding: 0 20px;
+    background: #2F6FED;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.tl-btn-search:hover { background: #1a5cd8; }
+.tl-btn-search:disabled { background: #9CA3AF; cursor: not-allowed; }
+
+/* ── Upload area ─────────────────────────────────────── */
+.tl-upload-area {
+    border: 2px dashed #D1D5DB;
+    border-radius: 12px;
+    padding: 32px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+}
+
+.tl-upload-area:hover {
+    border-color: #2F6FED;
+    background: #F0F6FF;
+}
+
+.tl-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.tl-upload-icon {
+    font-size: 40px !important;
+    color: #9CA3AF;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.tl-upload-label {
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.tl-upload-label strong {
+    color: #2F6FED;
+}
+
+.tl-upload-preview {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #374151;
+    background: #F9FAFB;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.tl-upload-preview img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #E5E7EB;
+}
+
+/* ── Camera ──────────────────────────────────────────── */
+.tl-camera-wrap {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    aspect-ratio: 4/3;
+    position: relative;
+    max-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tl-camera-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tl-camera-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.tl-camera-frame {
+    width: 180px;
+    height: 180px;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+}
+
+.tl-camera-hint {
+    font-size: 12px;
+    color: #6B7280;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.tl-btn-stop-cam {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 16px;
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1.5px solid #FECACA;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* ── Status messages ─────────────────────────────────── */
+.tl-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-top: 16px;
+}
+
+.tl-alert-error {
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+}
+
+.tl-alert-loading {
+    background: #EFF6FF;
+    color: #2F6FED;
+    border: 1px solid #BFDBFE;
+}
+
+.tl-alert-scan {
+    background: #ECFDF5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+}
+
+/* ── Result card ─────────────────────────────────────── */
+.tl-result-wrap {
+    max-width: 680px;
+    margin: 24px auto 0;
+    padding: 0 16px;
+}
+
+.tl-result-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+    overflow: hidden;
+}
+
+.tl-result-header {
+    background: linear-gradient(135deg, #1a3a6e 0%, #2F6FED 100%);
+    padding: 20px 24px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.tl-result-code {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.tl-result-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tl-status-paid    { background: #ECFDF5; color: #065F46; }
+.tl-status-pending { background: #FFFBEB; color: #92400E; }
+.tl-status-cancel  { background: #FEF2F2; color: #DC2626; }
+
+.tl-result-body {
+    padding: 20px 24px;
+}
+
+.tl-route-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.tl-route-arrow {
+    color: #2F6FED;
+    font-size: 20px !important;
+}
+
+.tl-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    margin-bottom: 20px;
+}
+
+.tl-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tl-info-label {
+    font-size: 11px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.tl-info-value {
+    font-size: 14px;
+    color: #111827;
+    font-weight: 500;
+}
+
+.tl-divider {
+    border: none;
+    border-top: 1px solid #F3F4F6;
+    margin: 16px 0;
+}
+
+.tl-pax-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tl-pax-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tl-pax-item {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tl-pax-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #111827;
+}
+
+.tl-pax-id {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+}
+
+.tl-pax-seat {
+    text-align: right;
+}
+
+.tl-seat-badge {
+    display: inline-block;
+    background: #EFF6FF;
+    color: #2F6FED;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.tl-pax-price {
+    font-size: 13px;
+    color: #6B7280;
+    margin-top: 4px;
+}
+
+.tl-pax-status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.tl-pax-status-badge.confirmed { background: #ECFDF5; color: #065F46; }
+.tl-pax-status-badge.cancelled { background: #FEF2F2; color: #DC2626; }
+.tl-pax-status-badge.used      { background: #F3F4F6; color: #374151; }
+
+.tl-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F9FAFB;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.tl-total-label {
+    font-size: 14px;
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.tl-total-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #EF4444;
+}
+
+/* ── Action buttons ──────────────────────────────────── */
+.tl-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #F3F4F6;
+    flex-wrap: wrap;
+}
+
+.tl-btn-print {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 18px;
+    background: #2F6FED;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tl-btn-print:hover { background: #1a5cd8; }
+
+.tl-btn-new {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 18px;
+    background: #F9FAFB;
+    color: #374151;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tl-btn-new:hover { background: #F3F4F6; }
+
+/* ── Print: ẩn toàn bộ page, TicketPrint.css tự hiện .ticket-print-wrapper ── */
+@media print {
+    .tl-page {
+        display: none !important;
+    }
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 520px) {
+    .tl-card { padding: 20px 16px; }
+    .tl-info-grid { grid-template-columns: 1fr; }
+    .tl-result-body { padding: 16px; }
+    .tl-result-header { padding: 16px; }
+    .tl-actions { padding: 12px 16px; }
+    .tl-input-row { flex-direction: column; align-items: stretch; }
+    .tl-btn-search { justify-content: center; }
+}

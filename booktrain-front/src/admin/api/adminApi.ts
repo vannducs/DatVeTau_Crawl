@@ -86,3 +86,13 @@ export const logsAdminApi = {
     my:     (params: object) => api.get("/logs/my", { params }),
     orders: (params: object) => api.get("/logs/orders", { params }),
 };
+
+// ─── Crawler ─────────────────────────────────────────────────────────────────
+export const crawlerApi = {
+    // Synchronous bulk crawl — may take several minutes; timeout set to 10 min
+    triggerAll:   (body: object) => api.post("/crawler/trigger-all", body, { timeout: 600_000 }),
+    trigger:      (body: object) => api.post("/crawler/trigger", body),
+    logs:         (page = 0, size = 20) => api.get("/crawler/logs", { params: { page, size } }),
+    configs:      () => api.get("/crawler/configs"),
+    updateConfig: (id: number, body: object) => api.put(`/crawler/configs/${id}`, body),
+};

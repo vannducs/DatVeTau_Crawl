@@ -28,6 +28,7 @@ import PaymentsPage         from "./admin/pages/PaymentsPage";
 import OrderHistoryPage     from "./admin/pages/OrderHistoryPage";
 import NotificationsPage    from "./admin/pages/NotificationsPage";
 import AdminLogsPage        from "./admin/pages/AdminLogsPage";
+import CrawlerPage          from "./admin/pages/CrawlerPage";
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
             <Route path="orders"        element={<OrderHistoryPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="logs"          element={<AdminLogsPage />} />
+            <Route path="crawler"       element={<CrawlerPage />} />
           </Route>
         </Routes>
       </AuthProvider>

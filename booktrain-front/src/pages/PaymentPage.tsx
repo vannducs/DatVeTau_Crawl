@@ -6,7 +6,7 @@ import type { TripResult } from "../types/trip";
 import "./payment.css";
 
 interface PassengerForm {
-    seatId: number;
+    tripSeatId: number;   // id của TripSeat
     seatNumber: string;
     carriageType: string;
     carriageOrder: number;

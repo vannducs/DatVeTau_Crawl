@@ -120,3 +120,6 @@ booktrain-front/*.ntvs*
 booktrain-front/*.njsproj
 booktrain-front/*.sln
 booktrain-front/*.sw?
+
+text.txt
+DatVeTau_Crawl.sql

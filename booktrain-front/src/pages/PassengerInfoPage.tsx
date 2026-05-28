@@ -29,7 +29,7 @@ const TYPE_LABEL: Record<PassengerType, string> = {
 };
 
 interface PassengerForm {
-    seatId: number;
+    tripSeatId: number;   // id của TripSeat (thay seatId cũ)
     seatNumber: string;
     carriageType: string;
     carriageOrder: number;
@@ -134,7 +134,7 @@ export default function PassengerInfoPage() {
                 const basePrice = s.price;
                 const finalPrice = Math.round(basePrice * (1 - discount));
                 return {
-                    seatId: s.id,
+                    tripSeatId: s.id,
                     seatNumber: s.seatNumber,
                     carriageType: s.carriageType,
                     carriageOrder: s.carriageOrder,
@@ -261,7 +261,7 @@ export default function PassengerInfoPage() {
                                 const displayIndex = sameTypeBefore + 1;
 
                                 return (
-                                    <div key={form.seatId} className="pi-passenger-card">
+                                    <div key={form.tripSeatId} className="pi-passenger-card">
                                         <div className="pi-passenger-header">
                                             <span className="pi-passenger-label">
                                                 {typeLabel} {displayIndex}
@@ -411,7 +411,7 @@ export default function PassengerInfoPage() {
                                 const displayIndex = sameTypeBefore + 1;
 
                                 return (
-                                    <div key={form.seatId} className="pi-summary-item">
+                                    <div key={form.tripSeatId} className="pi-summary-item">
                                         <div className="pi-summary-item-label">
                                             {typeLabel} {displayIndex}
                                             {discount > 0 && (

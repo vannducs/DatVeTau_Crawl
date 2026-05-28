@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard, Train, MapPin, Users,
-    CreditCard, Bell, ClipboardList, LogOut, CalendarDays,
+    CreditCard, Bell, ClipboardList, LogOut, CalendarDays, Database,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
     { to: "/admin/payments",       label: "Quản lý thanh toán",    icon: CreditCard      },
     { to: "/admin/notifications",  label: "Thông báo",             icon: Bell            },
     { to: "/admin/logs",           label: "Lịch sử & Giám sát",   icon: ClipboardList   },
+    { to: "/admin/crawler",        label: "Quản lý Crawler",       icon: Database        },
 ];
 
 export default function AdminSidebar() {

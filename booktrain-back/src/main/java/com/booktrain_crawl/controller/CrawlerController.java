@@ -1,6 +1,7 @@
 package com.booktrain_crawl.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -10,23 +11,29 @@ import org.springframework.web.bind.annotation.*;
 import com.booktrain_crawl.crawler.VexereCrawlerService;
 import com.booktrain_crawl.entity.CrawlerConfig;
 import com.booktrain_crawl.entity.CrawlerLog;
+import com.booktrain_crawl.entity.TrainTrip;
 import com.booktrain_crawl.repository.CrawlerConfigRepository;
 import com.booktrain_crawl.repository.CrawlerLogRepository;
+import com.booktrain_crawl.repository.TrainTripRepository;
+import com.booktrain_crawl.repository.TripSegmentPriceRepository;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin/crawler")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class CrawlerController {
 
-    private final VexereCrawlerService   crawlerService;
-    private final CrawlerConfigRepository configRepo;
-    private final CrawlerLogRepository   logRepo;
+    private final VexereCrawlerService     crawlerService;
+    private final CrawlerConfigRepository  configRepo;
+    private final CrawlerLogRepository     logRepo;
+    private final TrainTripRepository      tripRepo;
+    private final TripSegmentPriceRepository priceRepo;
 
     /**
      * POST /api/admin/crawler/trigger
@@ -191,5 +198,43 @@ public class CrawlerController {
             configRepo.save(cfg);
             return ResponseEntity.ok(Map.<String, Object>of("success", true, "message", "Đã cập nhật config"));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * POST /api/admin/crawler/repair
+     * Tìm các trip không có carriage, xóa rồi crawl lại.
+     * Body: { vexereToken? }
+     * vexereIdIndex format: "VNR|SE3|2026-06-01|01:00|HNO|DNA"
+     */
+    @PostMapping("/repair")
+    public ResponseEntity<Map<String, Object>> repairEmptyTrips(
+            @RequestBody(required = false) Map<String, String> body) {
+
+        String token = body != null ? body.get("vexereToken") : null;
+        List<TrainTrip> emptyTrips = tripRepo.findEmptyTrips();
+        int repaired = 0;
+
+        for (TrainTrip trip : emptyTrips) {
+            try {
+                if (trip.getVexereIdIndex() == null) continue;
+                String[] parts = trip.getVexereIdIndex().split("\\|");
+                if (parts.length < 6) continue;
+
+                String    from = parts[4];
+                String    to   = parts[5];
+                LocalDate date = LocalDate.parse(parts[2]);
+
+                priceRepo.deleteByTripId(trip.getId());
+                tripRepo.delete(trip);
+                crawlerService.crawlAndSave(from, to, date, token);
+                repaired++;
+            } catch (Exception e) {
+                log.error("Repair failed for trip id={}: {}", trip.getId(), e.getMessage());
+            }
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "repaired", repaired,
+                "total",    emptyTrips.size()));
     }
 }

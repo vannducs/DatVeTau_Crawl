@@ -103,6 +103,9 @@ public interface TrainTripRepository extends JpaRepository<TrainTrip, Integer> {
     boolean existsByVexereIdIndex(String vexereIdIndex);
     Optional<TrainTrip> findByVexereIdIndex(String vexereIdIndex);
 
+    @Query("SELECT t FROM TrainTrip t WHERE NOT EXISTS (SELECT 1 FROM TripCarriage c WHERE c.trip = t)")
+    List<TrainTrip> findEmptyTrips();
+
     @Query("""
         SELECT t FROM TrainTrip t
         JOIN FETCH t.train

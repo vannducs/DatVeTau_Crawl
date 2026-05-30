@@ -92,6 +92,7 @@ export const crawlerApi = {
     // Synchronous bulk crawl — may take several minutes; timeout set to 10 min
     triggerAll:   (body: object) => api.post("/crawler/trigger-all", body, { timeout: 600_000 }),
     trigger:      (body: object) => api.post("/crawler/trigger", body),
+    repair:       (body: object) => api.post("/crawler/repair", body, { timeout: 300_000 }),
     logs:         (page = 0, size = 20) => api.get("/crawler/logs", { params: { page, size } }),
     configs:      () => api.get("/crawler/configs"),
     updateConfig: (id: number, body: object) => api.put(`/crawler/configs/${id}`, body),

@@ -136,8 +136,12 @@ public class TripService {
             Long minPrice = prices.stream()
                     .filter(p -> p.getCarriageType().equals(tc.getCarriageType()))
                     .map(p -> p.getPrice().longValue())
+                    .filter(v -> v > 0)
                     .min(Long::compareTo)
-                    .orElseGet(() -> tc.getMinPrice() != null ? tc.getMinPrice() : 0L);
+                    .orElseGet(() -> {
+                        if (tc.getMinPrice() != null && tc.getMinPrice() > 0) return tc.getMinPrice();
+                        return trip.getMinPrice() != null ? trip.getMinPrice() : 0L;
+                    });
 
             return TripResultDTO.CarriageSummaryDTO.builder()
                     .carriageOrder(tc.getCarriageOrder())
@@ -204,6 +208,11 @@ public class TripService {
                             p -> p.getPrice().longValue(),
                             (a, b) -> a));
 
+            // Fallback price: segment prices → carriage minPrice → trip minPrice
+            long carriageFallback = tc.getMinPrice() != null && tc.getMinPrice() > 0
+                    ? tc.getMinPrice()
+                    : (trip.getMinPrice() != null ? trip.getMinPrice() : 0L);
+
             List<SeatDTO> dtos = seats.stream().map(s -> SeatDTO.builder()
                     .id(s.getId().intValue())
                     .seatNumber(s.getSeatNumber())
@@ -214,7 +223,7 @@ public class TripService {
                     .carriageType(tc.getCarriageType())
                     .isVip(false)
                     .status(bookedSeatIds.contains(s.getId()) ? "booked" : "available")
-                    .price(priceByBerth.getOrDefault(s.getBerthPosition(), 0L))
+                    .price(priceByBerth.getOrDefault(s.getBerthPosition(), carriageFallback))
                     .build()).collect(Collectors.toList());
 
             result.put(tc.getCarriageOrder(), dtos);

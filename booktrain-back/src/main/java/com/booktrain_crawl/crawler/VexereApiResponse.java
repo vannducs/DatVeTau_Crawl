@@ -16,30 +16,30 @@ public class VexereApiResponse {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TripData {
-        @JsonProperty("idIndex")       private String idIndex;
-        @JsonProperty("trainNumber")   private String trainNumber;
-        @JsonProperty("trainId")       private Long   trainId;
-        @JsonProperty("hanhTrinhId")   private Long   hanhTrinhId;
-        @JsonProperty("session")       private String session;
-        @JsonProperty("startPoint")    private String startPoint;
-        @JsonProperty("endPoint")      private String endPoint;
-        @JsonProperty("departurePlace")private String departurePlace;
-        @JsonProperty("arrivalPlace")  private String arrivalPlace;
-        @JsonProperty("date")          private String date;
-        @JsonProperty("time")          private String time;
-        @JsonProperty("arrivalDate")   private String arrivalDate;
-        @JsonProperty("arrivalTime")   private String arrivalTime;
-        @JsonProperty("duration")      private Integer duration;
-        @JsonProperty("minPrice")      private Long minPrice;
-        @JsonProperty("maxPrice")      private Long maxPrice;
-        @JsonProperty("minPriceMarkup")private Long minPriceMarkup;
-        @JsonProperty("maxPriceMarkup")private Long maxPriceMarkup;
-        @JsonProperty("seatAvailable") private Integer seatAvailable;
-        @JsonProperty("totalToa")      private Integer totalToa;
-        @JsonProperty("distance")      private Integer distance;
-        @JsonProperty("company")       private Company company;
-        @JsonProperty("listToaXe")     private List<ToaXe> listToaXe;
-        @JsonProperty("seatGroupStatus") private List<SeatGroupStatus> seatGroupStatus;
+        @JsonProperty("idIndex")            private String  idIndex;       // camelCase confirmed working
+        @JsonProperty("train_number")       private String  trainNumber;   // snake_case
+        @JsonProperty("train_id")           private Long    trainId;
+        @JsonProperty("hanh_trinh_id")      private Long    hanhTrinhId;
+        @JsonProperty("session")            private String  session;
+        @JsonProperty("start_point")        private String  startPoint;
+        @JsonProperty("end_point")          private String  endPoint;
+        @JsonProperty("departure_place")    private String  departurePlace;
+        @JsonProperty("arrival_place")      private String  arrivalPlace;
+        @JsonProperty("date")               private String  date;
+        @JsonProperty("time")               private String  time;
+        @JsonProperty("arrival_date")       private String  arrivalDate;
+        @JsonProperty("arrival_time")       private String  arrivalTime;
+        @JsonProperty("duration")           private Integer duration;
+        @JsonProperty("min_price")          private Long    minPrice;
+        @JsonProperty("max_price")          private Long    maxPrice;
+        @JsonProperty("min_price_markup")   private Long    minPriceMarkup;
+        @JsonProperty("max_price_markup")   private Long    maxPriceMarkup;
+        @JsonProperty("seat_available")     private Integer seatAvailable;
+        @JsonProperty("total_toa")          private Integer totalToa;
+        @JsonProperty("distance")           private Integer distance;
+        @JsonProperty("company")            private Company company;
+        @JsonProperty("list_toa_xe")        private List<ToaXe> listToaXe;
+        @JsonProperty("seat_group_status")  private List<SeatGroupStatus> seatGroupStatus;
     }
 
     @Data
@@ -52,34 +52,34 @@ public class VexereApiResponse {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ToaXe {
-        @JsonProperty("id")             private Long    id;
-        @JsonProperty("toaNo")          private Integer toaNo;
-        @JsonProperty("toaSo")          private String  toaSo;
-        @JsonProperty("toaXe")          private String  toaXe;          // model: "A64LV"
-        @JsonProperty("toaXeDienGiai")  private String  toaXeDienGiai;  // "Ngồi mềm điều hòa"
-        @JsonProperty("nhomChoWeb")     private String  nhomChoWeb;     // NGM | NAC | NAM
-        @JsonProperty("minPrice")       private Long    minPrice;
-        @JsonProperty("soChoTrong")     private Integer soChoTrong;     // available seats
-        @JsonProperty("soChoCon")       private Integer soChoCon;       // total seats
-        @JsonProperty("priceData")      private List<PriceData> priceData;
+        @JsonProperty("id")               private Long    id;
+        @JsonProperty("toa_no")           private Integer toaNo;
+        @JsonProperty("toa_so")           private String  toaSo;
+        @JsonProperty("toa_xe")           private String  toaXe;          // model: "A64LV"
+        @JsonProperty("toa_xe_dien_giai") private String  toaXeDienGiai;  // "Ngồi mềm điều hòa"
+        @JsonProperty("nhom_cho_web")     private String  nhomChoWeb;     // NGM | NAC | NAM
+        @JsonProperty("min_price")        private Long    minPrice;
+        @JsonProperty("so_cho_trong")     private Integer soChoTrong;     // available seats
+        @JsonProperty("so_cho_con")       private Integer soChoCon;       // total seats
+        @JsonProperty("price_data")       private List<PriceData> priceData;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PriceData {
-        @JsonProperty("id")         private Long   id;
-        @JsonProperty("loaiCho")    private String loaiCho;
-        @JsonProperty("tenLoaiCho") private String tenLoaiCho;
-        @JsonProperty("nhomChoWeb") private String nhomChoWeb;
-        @JsonProperty("giaVe")      private Long   giaVe;
-        @JsonProperty("tienThu")    private Long   tienThu;
-        @JsonProperty("chos")       private Object chos;
+        @JsonProperty("id")           private Long   id;
+        @JsonProperty("loai_cho")     private String loaiCho;
+        @JsonProperty("ten_loai_cho") private String tenLoaiCho;
+        @JsonProperty("nhom_cho_web") private String nhomChoWeb;
+        @JsonProperty("gia_ve")       private Long   giaVe;
+        @JsonProperty("tien_thu")     private Long   tienThu;
+        @JsonProperty("chos")         private Object chos;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SeatGroupStatus {
-        @JsonProperty("type")         private String      type;     // NGM | NAC | NAM
+        @JsonProperty("type")         private String      type;
         @JsonProperty("quantity")     private Integer     quantity;
         @JsonProperty("prices")       private List<Long>  prices;
         @JsonProperty("pricesMarkup") private List<Long>  pricesMarkup;

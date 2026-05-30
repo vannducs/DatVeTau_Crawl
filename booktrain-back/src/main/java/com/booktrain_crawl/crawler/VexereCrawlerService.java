@@ -31,6 +31,7 @@ public class VexereCrawlerService {
     private final TripSeatRepository     seatRepo;
     private final TripSegmentPriceRepository priceRepo;
     private final CrawlerLogRepository   crawlerLogRepo;
+    private final SeatBookingRepository  seatBookingRepo;
 
     private static final Map<String, String> GROUP_TO_TYPE = Map.of(
             "NGM", "seat",
@@ -39,7 +40,9 @@ public class VexereCrawlerService {
     );
 
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+            .registerModule(new JavaTimeModule())
+            .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setPropertyNamingStrategy(com.fasterxml.jackson.databind.PropertyNamingStrategies.LOWER_CAMEL_CASE);
 
     /** Result returned per crawlAndSave call — used by CrawlerController.triggerAll */
     public record CrawlResult(int tripsFound, int tripsSaved, int totalCarriages, int totalSeats, String status) {}
@@ -176,7 +179,6 @@ public class VexereCrawlerService {
         return new CrawlResult(tripsFound, tripsSaved, totalCarriages, totalSeats, status);
     }
 
-    @Transactional
     public void saveTripData(VexereApiResponse.TripData item,
                              TrainStation fromStation, TrainStation toStation, LocalDate date) {
         String trainCode = item.getTrainNumber() != null ? item.getTrainNumber() : "UNKNOWN";
@@ -225,11 +227,10 @@ public class VexereCrawlerService {
     }
 
     /** Lưu toa/ghế/giá cho một trip (dùng cho cả trip mới và backfill trip cũ thiếu carriage). */
-    @Transactional
     public void saveCarriagesForTrip(TrainTrip trip, VexereApiResponse.TripData item,
                                      TrainStation from, TrainStation to) {
-        log.info("=== TRIP saved id={}, listToaXe size={}", trip.getId(),
-                item.getListToaXe() != null ? item.getListToaXe().size() : "NULL");
+        log.info("=== TRIP saved id={} | listToaXe={}", trip.getId(),
+                item.getListToaXe() == null ? "NULL" : item.getListToaXe().size());
 
         Map<String, List<Long>> groupPrices = new HashMap<>();
         if (item.getSeatGroupStatus() != null) {
@@ -248,37 +249,68 @@ public class VexereCrawlerService {
             for (VexereApiResponse.ToaXe toa : listToa) {
                 String nhom         = toa.getNhomChoWeb() != null ? toa.getNhomChoWeb() : "NGM";
                 String carriageType = GROUP_TO_TYPE.getOrDefault(nhom, "seat");
-                int soChoCon   = toa.getSoChoCon()   != null ? toa.getSoChoCon()   : 0;
+                int realTotalSeats = parseTotalSeatsFromModel(toa.getToaXe());
+                if (realTotalSeats == 0) realTotalSeats = toa.getSoChoCon() != null ? toa.getSoChoCon() : 0;
                 int soChoTrong = toa.getSoChoTrong() != null ? toa.getSoChoTrong() : 0;
 
-                log.info("=== Saving carriage: model={} type={} soChoCon={}", toa.getToaXe(), carriageType, soChoCon);
+                try {
+                    log.info("=== Saving carriage model={} type={} realTotal={} available={}",
+                            toa.getToaXe(), carriageType, realTotalSeats, soChoTrong);
+                    TripCarriage carriage = carriageRepo.save(TripCarriage.builder()
+                            .trip(trip)
+                            .carriageOrder(order++)
+                            .carriageModel(toa.getToaXe())
+                            .carriageName(toa.getToaXeDienGiai())
+                            .carriageType(carriageType)
+                            .seatGroup(nhom)
+                            .totalSeats(realTotalSeats)
+                            .availableSeats(soChoTrong)
+                            .minPrice(toa.getMinPrice())
+                            .vexereId(toa.getId())
+                            .build());
+                    log.info("=== Carriage SAVED id={}", carriage.getId());
 
-                TripCarriage carriage = carriageRepo.save(TripCarriage.builder()
-                        .trip(trip)
-                        .carriageOrder(order++)
-                        .carriageModel(toa.getToaXe())
-                        .carriageName(toa.getToaXeDienGiai())
-                        .carriageType(carriageType)
-                        .seatGroup(nhom)
-                        .totalSeats(soChoCon)
-                        .availableSeats(soChoTrong)
-                        .minPrice(toa.getMinPrice())
-                        .vexereId(toa.getId())
-                        .build());
+                    List<TripSeat> savedSeats = seatRepo.saveAll(generateSeats(carriage, realTotalSeats));
+                    totalSeats += realTotalSeats;
 
-                seatRepo.saveAll(generateSeats(carriage, soChoCon));
-                totalSeats += soChoCon;
+                    // Mock "đã bán": random soldCount ghế để hiển thị đúng như Vexere
+                    int soldCount = realTotalSeats - soChoTrong;
+                    if (soldCount > 0 && !savedSeats.isEmpty()) {
+                        List<TripSeat> shuffled = new ArrayList<>(savedSeats);
+                        java.util.Collections.shuffle(shuffled);
+                        List<SeatBooking> mockBookings = new ArrayList<>();
+                        for (int i = 0; i < Math.min(soldCount, shuffled.size()); i++) {
+                            mockBookings.add(SeatBooking.builder()
+                                    .tripSeat(shuffled.get(i))
+                                    .trip(trip)
+                                    .fromStation(from)
+                                    .toStation(to)
+                                    .fromOrderIndex(from.getOrderIndex())
+                                    .toOrderIndex(to.getOrderIndex())
+                                    .ticketPrice(java.math.BigDecimal.ZERO)
+                                    .status("confirmed")
+                                    .build());
+                        }
+                        seatBookingRepo.saveAll(mockBookings);
+                    }
 
-                String priceKey = carriageType;
-                if (!savedPriceKeys.contains(priceKey)) {
-                    savedPriceKeys.add(priceKey);
-                    savePrices(trip, from, to, carriageType, nhom, groupPrices);
+                    String priceKey = carriageType;
+                    if (!savedPriceKeys.contains(priceKey)) {
+                        savedPriceKeys.add(priceKey);
+                        savePrices(trip, from, to, carriageType, nhom, groupPrices);
+                    }
+                } catch (Exception ex) {
+                    log.error("=== CARRIAGE SAVE FAILED model={}: ", toa.getToaXe(), ex);
                 }
             }
         }
 
         trip.setTotalSeats(totalSeats);
         tripRepo.save(trip);
+
+        // TODO VĐ3: Nếu totalSeats thấp (ít toa hơn mong đợi), các toa kín chỗ không xuất hiện
+        // trong response tìm kiếm. Cần gọi Vexere seat-map API để lấy đủ toa — endpoint chưa
+        // xác định. Chờ user quyết định. Ví dụ: /v2/route/train/{hanhTrinhId}/seat-map
     }
 
     private List<TripSeat> generateSeats(TripCarriage carriage, int total) {
@@ -289,30 +321,52 @@ public class VexereCrawlerService {
                     seats.add(TripSeat.builder().tripCarriage(carriage)
                             .seatNumber(String.format("%02d", i)).berthPosition("seat").build());
             }
+            // sleeper_3: 6 giường/khoang (3 tầng × 2 bên): L1,L2,M1,M2,U1,U2
             case "sleeper_3" -> {
-                int khoang = total > 0 ? total / 3 : 0;
+                int khoang = total > 0 ? total / 6 : 0;
                 for (int k = 1; k <= khoang; k++) {
                     String p = String.format("%02d", k);
                     seats.add(TripSeat.builder().tripCarriage(carriage)
-                            .seatNumber(p+"-L").compartmentNo(k).berthPosition("lower").build());
+                            .seatNumber(p+"-L1").compartmentNo(k).berthPosition("lower").build());
                     seats.add(TripSeat.builder().tripCarriage(carriage)
-                            .seatNumber(p+"-M").compartmentNo(k).berthPosition("middle").build());
+                            .seatNumber(p+"-L2").compartmentNo(k).berthPosition("lower").build());
                     seats.add(TripSeat.builder().tripCarriage(carriage)
-                            .seatNumber(p+"-U").compartmentNo(k).berthPosition("upper").build());
+                            .seatNumber(p+"-M1").compartmentNo(k).berthPosition("middle").build());
+                    seats.add(TripSeat.builder().tripCarriage(carriage)
+                            .seatNumber(p+"-M2").compartmentNo(k).berthPosition("middle").build());
+                    seats.add(TripSeat.builder().tripCarriage(carriage)
+                            .seatNumber(p+"-U1").compartmentNo(k).berthPosition("upper").build());
+                    seats.add(TripSeat.builder().tripCarriage(carriage)
+                            .seatNumber(p+"-U2").compartmentNo(k).berthPosition("upper").build());
                 }
             }
+            // sleeper_2: 4 giường/khoang (2 tầng × 2 bên): L1,L2,U1,U2
             case "sleeper_2" -> {
-                int khoang = total > 0 ? total / 2 : 0;
+                int khoang = total > 0 ? total / 4 : 0;
                 for (int k = 1; k <= khoang; k++) {
                     String p = String.format("%02d", k);
                     seats.add(TripSeat.builder().tripCarriage(carriage)
-                            .seatNumber(p+"-L").compartmentNo(k).berthPosition("lower").build());
+                            .seatNumber(p+"-L1").compartmentNo(k).berthPosition("lower").build());
                     seats.add(TripSeat.builder().tripCarriage(carriage)
-                            .seatNumber(p+"-U").compartmentNo(k).berthPosition("upper").build());
+                            .seatNumber(p+"-L2").compartmentNo(k).berthPosition("lower").build());
+                    seats.add(TripSeat.builder().tripCarriage(carriage)
+                            .seatNumber(p+"-U1").compartmentNo(k).berthPosition("upper").build());
+                    seats.add(TripSeat.builder().tripCarriage(carriage)
+                            .seatNumber(p+"-U2").compartmentNo(k).berthPosition("upper").build());
                 }
             }
         }
         return seats;
+    }
+
+    /** Trích số ghế thực tế từ tên model toa: A64LV→64, An28LMV→28, Bn42LM→42. */
+    private int parseTotalSeatsFromModel(String toaXe) {
+        if (toaXe == null) return 0;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(toaXe);
+        if (m.find()) {
+            try { return Integer.parseInt(m.group()); } catch (Exception e) { /* fall through */ }
+        }
+        return 0;
     }
 
     private void savePrices(TrainTrip trip, TrainStation from, TrainStation to,
@@ -336,11 +390,20 @@ public class VexereCrawlerService {
 
         for (String[] bp : berthPrices) {
             try {
-                priceRepo.save(TripSegmentPrice.builder()
-                        .trip(trip).fromStation(from).toStation(to)
-                        .carriageType(carriageType).berthPosition(bp[0])
-                        .price(new BigDecimal(bp[1]))
-                        .build());
+                log.info("=== Saving price: trip_id={} from={} to={} type={} berth={} price={}",
+                        trip.getId(), from.getCode(), to.getCode(), carriageType, bp[0], bp[1]);
+                priceRepo.findByKey(trip.getId(), from.getId(), to.getId(), carriageType, bp[0])
+                        .ifPresentOrElse(
+                            existing -> {
+                                existing.setPrice(new BigDecimal(bp[1]));
+                                priceRepo.save(existing);
+                            },
+                            () -> priceRepo.save(TripSegmentPrice.builder()
+                                    .trip(trip).fromStation(from).toStation(to)
+                                    .carriageType(carriageType).berthPosition(bp[0])
+                                    .price(new BigDecimal(bp[1]))
+                                    .build())
+                        );
             } catch (Exception ignored) {}
         }
     }

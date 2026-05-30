@@ -41,6 +41,8 @@ export default function CrawlerPage() {
     const [loading,      setLoading]      = useState(false);
     const [crawlResult,  setCrawlResult]  = useState<CrawlResult | null>(null);
     const [error,        setError]        = useState("");
+    const [repairing,    setRepairing]    = useState(false);
+    const [repairResult, setRepairResult] = useState<{ repaired: number; total: number } | null>(null);
 
     const [historyLogs,    setHistoryLogs]    = useState<HistoryLog[]>([]);
     const [historyTotal,   setHistoryTotal]   = useState(0);
@@ -86,6 +88,21 @@ export default function CrawlerPage() {
             setError(axErr.response?.data?.message ?? "Crawl thất bại. Vui lòng thử lại.");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleRepair() {
+        if (repairing || loading) return;
+        setRepairing(true);
+        setRepairResult(null);
+        try {
+            const res = await crawlerApi.repair({ vexereToken: vexereToken.trim() || null });
+            setRepairResult(res.data as { repaired: number; total: number });
+            fetchHistory(0);
+        } catch {
+            // silently ignore; user can retry
+        } finally {
+            setRepairing(false);
         }
     }
 
@@ -182,19 +199,51 @@ export default function CrawlerPage() {
 
                 {error && <div className="crawler-error-box">{error}</div>}
 
-                <button
-                    className="crawler-submit-btn"
-                    onClick={handleCrawl}
-                    disabled={loading || (crawlMode === "date" && !specificDate)}
-                >
-                    <span
-                        className={`material-icons-round${loading ? " spin" : ""}`}
-                        style={{ fontSize: 18 }}
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                    <button
+                        className="crawler-submit-btn"
+                        onClick={handleCrawl}
+                        disabled={loading || repairing || (crawlMode === "date" && !specificDate)}
                     >
-                        {loading ? "sync" : "cloud_download"}
-                    </span>
-                    {loading ? "Đang cào dữ liệu..." : "Bắt đầu cào dữ liệu"}
-                </button>
+                        <span
+                            className={`material-icons-round${loading ? " spin" : ""}`}
+                            style={{ fontSize: 18 }}
+                        >
+                            {loading ? "sync" : "cloud_download"}
+                        </span>
+                        {loading ? "Đang cào dữ liệu..." : "Bắt đầu cào dữ liệu"}
+                    </button>
+
+                    <button
+                        className="crawler-submit-btn"
+                        onClick={handleRepair}
+                        disabled={repairing || loading}
+                        style={{ background: repairing ? "#6b7280" : "#f59e0b" }}
+                    >
+                        <span
+                            className={`material-icons-round${repairing ? " spin" : ""}`}
+                            style={{ fontSize: 18 }}
+                        >
+                            {repairing ? "sync" : "build"}
+                        </span>
+                        {repairing ? "Đang sửa..." : "Sửa chuyến rỗng"}
+                    </button>
+                </div>
+
+                {repairResult && (
+                    <div style={{
+                        marginTop: 10,
+                        padding: "8px 14px",
+                        background: repairResult.repaired > 0 ? "#f0fdf4" : "#f8fafc",
+                        border: "1.5px solid",
+                        borderColor: repairResult.repaired > 0 ? "#86efac" : "#e5e7eb",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        color: repairResult.repaired > 0 ? "#15803d" : "#6b7280",
+                    }}>
+                        Đã sửa <strong>{repairResult.repaired}</strong> / {repairResult.total} chuyến rỗng
+                    </div>
+                )}
 
                 {loading && (
                     <div>

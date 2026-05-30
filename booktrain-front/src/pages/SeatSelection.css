@@ -179,36 +179,36 @@
 
 .ss-seat-row {
     display: flex;
-    gap: 8px;
-    padding: 8px 0;
+    align-items: center;
+    gap: 0;
+    padding: 3px 0;
 }
 
 .ss-seat {
-    width: 52px;
-    height: 60px;
-    border-radius: 12px;
-    border: 2px solid;
+    width: 56px;
+    height: 64px;
+    border-radius: 10px;
+    border: 1.5px solid;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s;
-    gap: 2px;
+    gap: 3px;
     flex-shrink: 0;
+    position: relative;
 }
 
 .ss-seat--available {
     background: white;
     border-color: #d1d5db;
 }
-
 .ss-seat--available:hover {
     border-color: #2F6FED;
     background: #eff6ff;
     transform: translateY(-1px);
 }
-
 .ss-seat--selected {
     background: #2F6FED;
     border-color: #2F6FED;
@@ -216,27 +216,32 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(47,111,237,0.3);
 }
-
 .ss-seat--booked {
-    background: #f3f4f6;
+    background: #f0f0f0;
     border-color: #e5e7eb;
     cursor: not-allowed;
-    color: #9ca3af;
 }
 
 .ss-seat-icon {
     font-size: 13px;
     font-weight: 700;
+    color: inherit;
 }
-
 .ss-seat-price {
     font-size: 10px;
     color: #2F6FED;
     font-weight: 600;
+    line-height: 1;
 }
-
 .ss-seat--selected .ss-seat-price { color: rgba(255,255,255,0.85); }
-.ss-seat--booked .ss-seat-price { display: none; }
+
+/* Ghế đã bán: ✕ to, mờ ở giữa */
+.ss-seat-booked-mark {
+    font-size: 22px;
+    color: #b0b0b0;
+    font-weight: 300;
+    line-height: 1;
+}
 
 .ss-aisle {
     display: flex;
@@ -317,44 +322,39 @@
 
 .ss-berth {
     width: 80px;
-    height: 52px;
+    height: 56px;
     border-radius: 6px;
     border: 1.5px solid;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 10px;
+    justify-content: center;
+    gap: 3px;
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
+    position: relative;
 }
 
 .ss-berth--available {
     background: white;
     border-color: #d1d5db;
 }
-
 .ss-berth--available:hover {
     border-color: #2F6FED;
     background: #eff6ff;
 }
-
 .ss-berth--selected {
     background: #2F6FED;
     border-color: #2F6FED;
     color: white;
     box-shadow: 0 2px 6px rgba(47,111,237,0.3);
 }
-
 .ss-berth--booked {
-    background: #f3f4f6;
+    background: #f0f0f0;
     border-color: #e5e7eb;
     cursor: not-allowed;
-    color: #9ca3af;
-    justify-content: center;
 }
-
 .ss-berth--empty {
     background: transparent;
     border-color: transparent;
@@ -362,17 +362,25 @@
 }
 
 .ss-berth-num {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
+    line-height: 1;
 }
-
 .ss-berth-price {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: #2F6FED;
+    line-height: 1;
 }
-
 .ss-berth--selected .ss-berth-price { color: rgba(255,255,255,0.85); }
+
+/* Berth đã bán: ✕ to, mờ */
+.ss-berth-booked-mark {
+    font-size: 20px;
+    color: #b0b0b0;
+    font-weight: 300;
+    line-height: 1;
+}
 
 /* Compartment footer labels */
 .ss-compartment-footer {
@@ -520,4 +528,58 @@
     background: #e5e7eb;
     color: #9ca3af;
     cursor: not-allowed;
+}
+
+/* ===== Seat carriage layout (4-hàng × N-cột, chia BÀN) ===== */
+.ss-seat-half {
+    display: flex;
+    gap: 3px;
+}
+
+.ss-seat-divider {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    background: #f5f5f5;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 8px 5px;
+    color: #aaa;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    flex-shrink: 0;
+    margin: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ss-seat--empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* ===== Sleeper grid mới (tầng × khoang × 2 bên) ===== */
+.ss-sleeper-grid2 {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: stretch;
+    padding: 12px 0;
+}
+
+.ss-compartment2 {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 80px;
+}
+
+/* Mỗi ô = 1 tầng của 1 khoang, chứa 2 berth cạnh nhau */
+.ss-berth-pair {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
 }

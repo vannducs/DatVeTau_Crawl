@@ -19,7 +19,7 @@ const CARRIAGE_LABEL: Record<string, string> = {
     sleeper_2: "Nằm khoang 4",
 };
 
-/** Format giá ngắn gọn: 758000→"758K", 1322000→"1.3M" */
+/** Format giá ngắn gọn: 765000→"765K", 1322000→"1.3M" */
 function formatPrice(price: number): string {
     if (!price || price <= 0) return "";
     if (price >= 1_000_000) {
@@ -89,8 +89,7 @@ export default function SeatSelectionPage() {
         return "ss-seat ss-seat--available";
     }
 
-    // ── Toa ngồi: 4 hàng × N cột, chia BÀN dọc ở giữa ─────────────────────────
-
+    // ── SeatBox dùng chung ────────────────────────────────────────────────────────
     function SeatBox({ seat }: { seat: SeatDTO | undefined }) {
         if (!seat) return <div className="ss-seat ss-seat--empty" />;
         return (
@@ -109,22 +108,52 @@ export default function SeatSelectionPage() {
         );
     }
 
-    function renderSeatCarriage(seats: SeatDTO[]) {
-        const totalCols = Math.ceil(seats.length / 4);  // 16 cho 64 ghế
-        const halfCols  = Math.ceil(totalCols / 2);     // 8
+    // ── Toa ngồi: Grid thật từ Vexere API 2 (5 cột, col 3 = hành lang) ───────────
+    function renderSeatCarriageGrid(seats: SeatDTO[]) {
+        const byPos: Record<string, SeatDTO> = {};
+        for (const s of seats) {
+            if (s.gridRow != null && s.gridCol != null)
+                byPos[`${s.gridRow}-${s.gridCol}`] = s;
+        }
 
-        // Tra ghế theo số thứ tự thực: col*4 + rowInCol + 1
+        const maxRow = Math.max(...seats.map(s => s.gridRow ?? 0));
+        const maxCol = Math.max(...seats.map(s => s.gridCol ?? 0));
+
+        return (
+            <div className="ss-seat-map-wrap">
+                <div className="ss-grid-carriage">
+                    {Array.from({ length: maxRow }, (_, ri) => {
+                        const row = ri + 1;
+                        return (
+                            <div key={row} className="ss-grid-row">
+                                {Array.from({ length: maxCol }, (_, ci) => {
+                                    const col = ci + 1;
+                                    // col 3 (1-indexed) = hành lang dọc
+                                    if (col === 3) return (
+                                        <div key={col} className="ss-grid-aisle" />
+                                    );
+                                    const seat = byPos[`${row}-${col}`];
+                                    if (!seat) return <div key={col} className="ss-grid-empty" />;
+                                    return <SeatBox key={col} seat={seat} />;
+                                })}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+
+    // ── Toa ngồi: fallback layout khi không có gridRow/gridCol ───────────────────
+    function renderSeatCarriageFallback(seats: SeatDTO[]) {
+        const totalCols = Math.ceil(seats.length / 4);
+        const halfCols  = Math.ceil(totalCols / 2);
+
         function getSeatAt(col: number, rowInCol: number): SeatDTO | undefined {
             const n = col * 4 + rowInCol + 1;
             return seats.find(s => parseInt(s.seatNumber) === n);
         }
 
-        // rowInCol → vị trí hàng trong UI (giống Vexere, cửa sổ xa hành lang)
-        // 3 → hàng 1 (xa hành lang, trên)
-        // 1 → hàng 2 (gần hành lang, trên)
-        //       HÀNH LANG
-        // 2 → hàng 3 (gần hành lang, dưới)
-        // 0 → hàng 4 (xa hành lang, dưới)
         function renderRow(rowInCol: number) {
             const rightCols = totalCols - halfCols;
             return (
@@ -157,6 +186,13 @@ export default function SeatSelectionPage() {
         );
     }
 
+    function renderSeatCarriage(seats: SeatDTO[]) {
+        const hasGrid = seats.length > 0 && seats[0].gridRow != null && seats[0].gridCol != null;
+        return hasGrid
+            ? renderSeatCarriageGrid(seats)
+            : renderSeatCarriageFallback(seats);
+    }
+
     // ── Toa nằm: N khoang × T tầng × 2 bên ─────────────────────────────────────
 
     function BerthBox({ seat }: { seat: SeatDTO }) {
@@ -165,7 +201,6 @@ export default function SeatSelectionPage() {
         else if (isSeatSelected(seat)) cls += " ss-berth--selected";
         else                           cls += " ss-berth--available";
 
-        // Hiển thị tên ngắn: "01-L1" → "1-L1"
         const shortNum = seat.seatNumber.replace(/^0+(\d)/, "$1");
 
         return (
@@ -185,7 +220,6 @@ export default function SeatSelectionPage() {
     }
 
     function renderSleeperCarriage(seats: SeatDTO[], carriageType: string) {
-        // Group by compartmentNo
         const byKhoang = new Map<number, SeatDTO[]>();
         for (const s of seats) {
             const k = s.compartmentNo ?? Number(s.seatNumber.split("-")[0]) ?? 0;
@@ -194,7 +228,6 @@ export default function SeatSelectionPage() {
         }
         const khoangList = Array.from(byKhoang.entries()).sort((a, b) => a[0] - b[0]);
 
-        // Tầng từ cao xuống thấp
         const tiers = carriageType === "sleeper_3"
             ? [{ pos: "upper", label: "Tầng 3" }, { pos: "middle", label: "Tầng 2" }, { pos: "lower", label: "Tầng 1" }]
             : [{ pos: "upper", label: "Tầng 2" }, { pos: "lower", label: "Tầng 1" }];
@@ -203,13 +236,11 @@ export default function SeatSelectionPage() {
             <div className="ss-sleeper-wrap">
                 <div className="ss-sleeper-aisle-label">H À N H &nbsp; L A N G</div>
                 <div className="ss-sleeper-grid2">
-                    {/* Tier labels - cột trái */}
                     <div className="ss-tier-labels">
                         {tiers.map(t => (
                             <div key={t.pos} className="ss-tier-label">{t.label}</div>
                         ))}
                     </div>
-                    {/* Mỗi khoang = 1 cột */}
                     {khoangList.map(([kNo, kSeats]) => (
                         <div key={kNo} className="ss-compartment2">
                             {tiers.map(t => {
@@ -225,7 +256,6 @@ export default function SeatSelectionPage() {
                         </div>
                     ))}
                 </div>
-                {/* Số khoang ở đáy */}
                 <div className="ss-compartment-footer">
                     <div className="ss-tier-label-spacer" />
                     <div className="ss-compartment-nums">

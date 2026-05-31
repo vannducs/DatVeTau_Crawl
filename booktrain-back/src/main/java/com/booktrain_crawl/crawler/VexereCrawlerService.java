@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -39,6 +40,14 @@ public class VexereCrawlerService {
             "NAM", "sleeper_2"
     );
 
+    // Vexere numeric station IDs — fallback khi DB chưa có vexere_station_id
+    private static final Map<String, Long> VEXERE_STATION_ID = Map.of(
+            "HNO", 102188L,
+            "SGO", 28284L,
+            "DNA", 135548L,
+            "VIN", 0L   // chưa xác định, bổ sung sau
+    );
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -49,7 +58,7 @@ public class VexereCrawlerService {
 
     /**
      * Crawl một tuyến một ngày.
-     * @param vexereToken Bearer token để gửi lên Vexere API; null → không gửi header Authorization
+     * @param vexereToken Bearer token; null → không gửi header Authorization
      */
     public CrawlResult crawlAndSave(String fromVexereCode, String toVexereCode,
                                     LocalDate date, String vexereToken) {
@@ -72,12 +81,10 @@ public class VexereCrawlerService {
                     "/v2/route/train?filter%%5Bfrom%%5D%%5B0%%5D=%s&filter%%5Bto%%5D%%5B0%%5D=%s&filter%%5Bdate%%5D=%s&filter%%5Bquantity%%5D=1&filter%%5Bpage%%5D=1&filter%%5Btime_id%%5D=%s&page=1&sort=fare%%3Aasc&time_id=%s",
                     fromVexereCode, toVexereCode, date.toString(), timeIdEncoded, timeIdEncoded);
 
-            // Build and log the full URL before calling
             String url = "https://internal-vroute-cmc.vexere.com" + uri;
             log.info("=== CALLING URL: {}", url);
             log.info("=== TOKEN: {}", token != null ? token.substring(0, Math.min(30, token.length())) + "..." : "NULL");
 
-            // Receive as String first, log raw, then parse
             String raw = vexereWebClient.get()
                     .uri(uri)
                     .headers(headers -> {
@@ -93,6 +100,9 @@ public class VexereCrawlerService {
             log.info("=== RAW RESPONSE: {}", raw);
 
             VexereApiResponse resp = objectMapper.readValue(raw, VexereApiResponse.class);
+            String bookingCode = resp.getBookingCode();
+            log.info("=== BOOKING CODE: {}", bookingCode);
+
             List<VexereApiResponse.TripData> data = resp.getData();
             if (data == null) data = List.of();
 
@@ -108,13 +118,11 @@ public class VexereCrawlerService {
             for (VexereApiResponse.TripData item : data) {
                 tripsFound++;
 
-                // Count carriages/seats from API data (used for both new and backfill paths)
                 int itemCarriages = item.getListToaXe() != null ? item.getListToaXe().size() : 0;
                 int itemSeats     = item.getListToaXe() != null
                         ? item.getListToaXe().stream().mapToInt(t -> t.getSoChoCon() != null ? t.getSoChoCon() : 0).sum()
                         : 0;
 
-                // Check if trip already exists by vexereIdIndex
                 Optional<TrainTrip> existingOpt = (item.getIdIndex() != null)
                         ? tripRepo.findByVexereIdIndex(item.getIdIndex())
                         : Optional.empty();
@@ -123,11 +131,10 @@ public class VexereCrawlerService {
                     TrainTrip existing = existingOpt.get();
                     long carriageCount = carriageRepo.countByTripId(existing.getId());
                     if (carriageCount == 0) {
-                        // Trip exists but carriages were never saved — backfill now
                         log.info("[Crawl] Trip {} (id={}) exists but missing carriages — backfilling",
                                 item.getIdIndex(), existing.getId());
                         try {
-                            saveCarriagesForTrip(existing, item, fromStation, toStation);
+                            saveCarriagesForTrip(existing, item, fromStation, toStation, bookingCode, date, token);
                             totalCarriages += itemCarriages;
                             totalSeats     += itemSeats;
                         } catch (Exception e) {
@@ -141,9 +148,8 @@ public class VexereCrawlerService {
                     continue;
                 }
 
-                // New trip — create trip + carriages
                 try {
-                    saveTripData(item, fromStation, toStation, date);
+                    saveTripData(item, fromStation, toStation, date, bookingCode, token);
                     tripsSaved++;
                     totalCarriages += itemCarriages;
                     totalSeats     += itemSeats;
@@ -180,7 +186,8 @@ public class VexereCrawlerService {
     }
 
     public void saveTripData(VexereApiResponse.TripData item,
-                             TrainStation fromStation, TrainStation toStation, LocalDate date) {
+                             TrainStation fromStation, TrainStation toStation,
+                             LocalDate date, String bookingCode, String token) {
         String trainCode = item.getTrainNumber() != null ? item.getTrainNumber() : "UNKNOWN";
         Train train = trainRepo.findByTrainCode(trainCode).orElseGet(() -> {
             VexereApiResponse.Company co = item.getCompany();
@@ -223,12 +230,13 @@ public class VexereCrawlerService {
                 .status("open")
                 .build());
 
-        saveCarriagesForTrip(trip, item, fromStation, toStation);
+        saveCarriagesForTrip(trip, item, fromStation, toStation, bookingCode, date, token);
     }
 
-    /** Lưu toa/ghế/giá cho một trip (dùng cho cả trip mới và backfill trip cũ thiếu carriage). */
+    /** Lưu toa/ghế/giá cho một trip. Dùng cho cả trip mới và backfill. */
     public void saveCarriagesForTrip(TrainTrip trip, VexereApiResponse.TripData item,
-                                     TrainStation from, TrainStation to) {
+                                     TrainStation from, TrainStation to,
+                                     String bookingCode, LocalDate date, String token) {
         log.info("=== TRIP saved id={} | listToaXe={}", trip.getId(),
                 item.getListToaXe() == null ? "NULL" : item.getListToaXe().size());
 
@@ -240,6 +248,11 @@ public class VexereCrawlerService {
             }
         }
 
+        long fromStId = getVexereStationId(from);
+        long toStId   = getVexereStationId(to);
+        boolean canCallApi2 = bookingCode != null && !bookingCode.isBlank()
+                && item.getTrainId() != null && fromStId > 0 && toStId > 0;
+
         int totalSeats = 0;
         Set<String> savedPriceKeys = new HashSet<>();
 
@@ -249,7 +262,7 @@ public class VexereCrawlerService {
             for (VexereApiResponse.ToaXe toa : listToa) {
                 String nhom         = toa.getNhomChoWeb() != null ? toa.getNhomChoWeb() : "NGM";
                 String carriageType = GROUP_TO_TYPE.getOrDefault(nhom, "seat");
-                int realTotalSeats = parseTotalSeatsFromModel(toa.getToaXe());
+                int realTotalSeats  = parseTotalSeatsFromModel(toa.getToaXe());
                 if (realTotalSeats == 0) realTotalSeats = toa.getSoChoCon() != null ? toa.getSoChoCon() : 0;
                 int soChoTrong = toa.getSoChoTrong() != null ? toa.getSoChoTrong() : 0;
 
@@ -270,28 +283,55 @@ public class VexereCrawlerService {
                             .build());
                     log.info("=== Carriage SAVED id={}", carriage.getId());
 
-                    List<TripSeat> savedSeats = seatRepo.saveAll(generateSeats(carriage, realTotalSeats));
-                    totalSeats += realTotalSeats;
+                    boolean api2Success = false;
 
-                    // Mock "đã bán": random soldCount ghế để hiển thị đúng như Vexere
-                    int soldCount = realTotalSeats - soChoTrong;
-                    if (soldCount > 0 && !savedSeats.isEmpty()) {
-                        List<TripSeat> shuffled = new ArrayList<>(savedSeats);
-                        java.util.Collections.shuffle(shuffled);
-                        List<SeatBooking> mockBookings = new ArrayList<>();
-                        for (int i = 0; i < Math.min(soldCount, shuffled.size()); i++) {
-                            mockBookings.add(SeatBooking.builder()
-                                    .tripSeat(shuffled.get(i))
-                                    .trip(trip)
-                                    .fromStation(from)
-                                    .toStation(to)
-                                    .fromOrderIndex(from.getOrderIndex())
-                                    .toOrderIndex(to.getOrderIndex())
-                                    .ticketPrice(java.math.BigDecimal.ZERO)
-                                    .status("confirmed")
-                                    .build());
+                    if (canCallApi2 && toa.getId() != null) {
+                        try {
+                            Thread.sleep(200); // nhẹ nhàng với Vexere API
+                            VexereSeatDetailResponse detail = callSeatDetailApi(
+                                    token, bookingCode, item.getTrainId(), toa.getId(),
+                                    fromStId, toStId, date, soChoTrong);
+
+                            if (detail != null && detail.getData() != null
+                                    && detail.getData().getCoachSeatTemplate() != null) {
+                                List<TripSeat> seats = parseSeatsFromApi2(carriage, carriageType, detail);
+                                if (!seats.isEmpty()) {
+                                    seatRepo.saveAll(seats);
+                                    totalSeats += seats.size();
+                                    api2Success = true;
+                                    log.info("=== API2 OK: toa {} saved {} ghế thật", toa.getId(), seats.size());
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.warn("=== API2 FAILED for toa {}: {}", toa.getId(), e.getMessage());
                         }
-                        seatBookingRepo.saveAll(mockBookings);
+                    }
+
+                    if (!api2Success) {
+                        // Fallback: tự sinh ghế + mock booking để hiển thị đúng số chỗ đã bán
+                        log.info("=== Fallback generateSeats for carriage id={}", carriage.getId());
+                        List<TripSeat> savedSeats = seatRepo.saveAll(generateSeats(carriage, realTotalSeats));
+                        totalSeats += realTotalSeats;
+
+                        int soldCount = realTotalSeats - soChoTrong;
+                        if (soldCount > 0 && !savedSeats.isEmpty()) {
+                            List<TripSeat> shuffled = new ArrayList<>(savedSeats);
+                            java.util.Collections.shuffle(shuffled);
+                            List<SeatBooking> mockBookings = new ArrayList<>();
+                            for (int i = 0; i < Math.min(soldCount, shuffled.size()); i++) {
+                                mockBookings.add(SeatBooking.builder()
+                                        .tripSeat(shuffled.get(i))
+                                        .trip(trip)
+                                        .fromStation(from)
+                                        .toStation(to)
+                                        .fromOrderIndex(from.getOrderIndex())
+                                        .toOrderIndex(to.getOrderIndex())
+                                        .ticketPrice(java.math.BigDecimal.ZERO)
+                                        .status("confirmed")
+                                        .build());
+                            }
+                            seatBookingRepo.saveAll(mockBookings);
+                        }
                     }
 
                     String priceKey = carriageType;
@@ -307,11 +347,125 @@ public class VexereCrawlerService {
 
         trip.setTotalSeats(totalSeats);
         tripRepo.save(trip);
-
-        // TODO VĐ3: Nếu totalSeats thấp (ít toa hơn mong đợi), các toa kín chỗ không xuất hiện
-        // trong response tìm kiếm. Cần gọi Vexere seat-map API để lấy đủ toa — endpoint chưa
-        // xác định. Chờ user quyết định. Ví dụ: /v2/route/train/{hanhTrinhId}/seat-map
     }
+
+    // ── API 2: POST /v2/train/seatByTrainCar ─────────────────────────────────────
+
+    private VexereSeatDetailResponse callSeatDetailApi(String token, String bookingCode,
+            Long trainId, Long toaId, long fromStId, long toStId, LocalDate date, int soChoTrong) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("type",             "depart");
+        body.put("DMTauId",          trainId);
+        body.put("DMToaVLId",        toaId);
+        body.put("BookingCode",      bookingCode);
+        body.put("from",             fromStId);
+        body.put("to",               toStId);
+        body.put("date",             date.toString());
+        body.put("seatFeAvailable",  soChoTrong);
+
+        String queryParam = "?bookingCode=" + bookingCode + "&isShowMinPrice=true";
+
+        String raw = vexereWebClient.post()
+                .uri("/v2/train/seatByTrainCar" + queryParam)
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(headers -> {
+                    if (token != null && !token.isBlank())
+                        headers.set("Authorization", "Bearer " + token);
+                    headers.set("origin-request-id",      "FE_NEXTJS_" + System.currentTimeMillis() + "_SEAT");
+                    headers.set("origin-request-product", "FE_NEXTJS");
+                })
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        log.info("=== SEAT DETAIL RAW (toa {}): {}", toaId,
+                raw != null && raw.length() > 600 ? raw.substring(0, 600) + "..." : raw);
+
+        try {
+            return objectMapper.readValue(raw, VexereSeatDetailResponse.class);
+        } catch (Exception e) {
+            log.error("=== SEAT DETAIL PARSE FAILED toa {}: {}", toaId, e.getMessage());
+            return null;
+        }
+    }
+
+    /** Parse danh sách TripSeat từ response API 2. */
+    private List<TripSeat> parseSeatsFromApi2(TripCarriage carriage, String carriageType,
+                                               VexereSeatDetailResponse detail) {
+        List<TripSeat> seats = new ArrayList<>();
+
+        List<VexereSeatDetailResponse.CoachSeatTemplate> templates =
+                detail.getData().getCoachSeatTemplate();
+        if (templates == null) return seats;
+
+        for (VexereSeatDetailResponse.CoachSeatTemplate coach : templates) {
+            if (coach.getSeats() == null) continue;
+
+            int coachNum = coach.getCoachNum() != null ? coach.getCoachNum() : 1;
+            String berthPos = mapCoachNumToBerth(carriageType, coachNum);
+
+            for (VexereSeatDetailResponse.Seat seat : coach.getSeats()) {
+                String seatCode = seat.getSeatCode();
+
+                // Bỏ qua hành lang và bàn
+                if ("HL".equals(seatCode) || (seatCode != null && seatCode.startsWith("B")))
+                    continue;
+
+                VexereSeatDetailResponse.TrainData td = seat.getTrainData();
+                if (td == null || td.getChoSo() == null) continue;
+
+                String seatStatus = "available";
+                if (td.getStatus() != null && td.getStatus().getStatus() != null
+                        && td.getStatus().getStatus() == 3) {
+                    seatStatus = "booked";
+                }
+
+                long price = 0L;
+                if (td.getGiaVe() != null) price = td.getGiaVe() * 1000L;
+
+                // compartmentNo: dùng row trong template (= vị trí khoang)
+                Integer compartmentNo = ("seat".equals(carriageType)) ? null : seat.getRow();
+
+                seats.add(TripSeat.builder()
+                        .tripCarriage(carriage)
+                        .seatNumber(td.getChoSo().toString())
+                        .compartmentNo(compartmentNo)
+                        .berthPosition(berthPos)
+                        .gridRow(seat.getRow())
+                        .gridCol(seat.getCol())
+                        .seatCode(seatCode)
+                        .loaiCho(td.getLoaiCho())
+                        .price(price)
+                        .status(seatStatus)
+                        .build());
+            }
+        }
+        return seats;
+    }
+
+    /** Map coach_num → berthPosition theo loại toa. */
+    private String mapCoachNumToBerth(String carriageType, int coachNum) {
+        return switch (carriageType) {
+            case "sleeper_2" -> coachNum == 1 ? "lower" : "upper";
+            case "sleeper_3" -> switch (coachNum) {
+                case 1 -> "lower";
+                case 2 -> "middle";
+                default -> "upper";
+            };
+            default -> "seat";
+        };
+    }
+
+    /** Lấy numeric Vexere station ID: từ entity trước, fallback static map. */
+    private long getVexereStationId(TrainStation station) {
+        if (station.getVexereStationId() != null && station.getVexereStationId() > 0)
+            return station.getVexereStationId();
+        return VEXERE_STATION_ID.getOrDefault(station.getVexereCode(), 0L);
+    }
+
+    // ── Fallback: tự sinh ghế khi API 2 không khả dụng ──────────────────────────
 
     private List<TripSeat> generateSeats(TripCarriage carriage, int total) {
         List<TripSeat> seats = new ArrayList<>();
@@ -321,7 +475,6 @@ public class VexereCrawlerService {
                     seats.add(TripSeat.builder().tripCarriage(carriage)
                             .seatNumber(String.format("%02d", i)).berthPosition("seat").build());
             }
-            // sleeper_3: 6 giường/khoang (3 tầng × 2 bên): L1,L2,M1,M2,U1,U2
             case "sleeper_3" -> {
                 int khoang = total > 0 ? total / 6 : 0;
                 for (int k = 1; k <= khoang; k++) {
@@ -340,7 +493,6 @@ public class VexereCrawlerService {
                             .seatNumber(p+"-U2").compartmentNo(k).berthPosition("upper").build());
                 }
             }
-            // sleeper_2: 4 giường/khoang (2 tầng × 2 bên): L1,L2,U1,U2
             case "sleeper_2" -> {
                 int khoang = total > 0 ? total / 4 : 0;
                 for (int k = 1; k <= khoang; k++) {

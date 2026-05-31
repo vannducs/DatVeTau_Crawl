@@ -13,6 +13,9 @@ public class VexereApiResponse {
     @JsonProperty("data")
     private List<TripData> data;
 
+    @JsonProperty("booking_code")
+    private String bookingCode;
+
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TripData {

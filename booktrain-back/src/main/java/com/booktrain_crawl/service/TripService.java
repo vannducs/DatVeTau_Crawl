@@ -213,18 +213,35 @@ public class TripService {
                     ? tc.getMinPrice()
                     : (trip.getMinPrice() != null ? trip.getMinPrice() : 0L);
 
-            List<SeatDTO> dtos = seats.stream().map(s -> SeatDTO.builder()
-                    .id(s.getId().intValue())
-                    .seatNumber(s.getSeatNumber())
-                    .compartmentNo(s.getCompartmentNo())
-                    .berthPosition(s.getBerthPosition())
-                    .carriageId(tc.getId().intValue())
-                    .carriageOrder(tc.getCarriageOrder())
-                    .carriageType(tc.getCarriageType())
-                    .isVip(false)
-                    .status(bookedSeatIds.contains(s.getId()) ? "booked" : "available")
-                    .price(priceByBerth.getOrDefault(s.getBerthPosition(), carriageFallback))
-                    .build()).collect(Collectors.toList());
+            List<SeatDTO> dtos = seats.stream().map(s -> {
+                // Status: booked nếu có booking thực tế HOẶC Vexere đánh dấu đã bán lúc crawl
+                String seatStatus = (bookedSeatIds.contains(s.getId()) || "booked".equals(s.getStatus()))
+                        ? "booked" : "available";
+
+                // Giá: ưu tiên giá thật từ API 2, fallback sang segment price / carriage / trip
+                long seatPrice = (s.getPrice() != null && s.getPrice() > 0)
+                        ? s.getPrice()
+                        : priceByBerth.getOrDefault(
+                              s.getBerthPosition() != null ? s.getBerthPosition() : "seat",
+                              carriageFallback);
+
+                return SeatDTO.builder()
+                        .id(s.getId().intValue())
+                        .seatNumber(s.getSeatNumber())
+                        .compartmentNo(s.getCompartmentNo())
+                        .berthPosition(s.getBerthPosition())
+                        .carriageId(tc.getId().intValue())
+                        .carriageOrder(tc.getCarriageOrder())
+                        .carriageType(tc.getCarriageType())
+                        .isVip(false)
+                        .status(seatStatus)
+                        .price(seatPrice)
+                        .gridRow(s.getGridRow())
+                        .gridCol(s.getGridCol())
+                        .seatCode(s.getSeatCode())
+                        .loaiCho(s.getLoaiCho())
+                        .build();
+            }).collect(Collectors.toList());
 
             result.put(tc.getCarriageOrder(), dtos);
         }
@@ -252,10 +269,16 @@ public class TripService {
     public List<Map<String, Object>> getCarriageSeats(Long carriageId) {
         return seatRepo.findByTripCarriageIdOrderBySeatNumber(carriageId).stream().map(s -> {
             Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id",             s.getId());
-            m.put("seatNumber",     s.getSeatNumber());
-            m.put("compartmentNo",  s.getCompartmentNo());
-            m.put("berthPosition",  s.getBerthPosition());
+            m.put("id",            s.getId());
+            m.put("seatNumber",    s.getSeatNumber());
+            m.put("compartmentNo", s.getCompartmentNo());
+            m.put("berthPosition", s.getBerthPosition());
+            m.put("gridRow",       s.getGridRow());
+            m.put("gridCol",       s.getGridCol());
+            m.put("seatCode",      s.getSeatCode());
+            m.put("loaiCho",       s.getLoaiCho());
+            m.put("price",         s.getPrice());
+            m.put("status",        s.getStatus());
             return m;
         }).collect(Collectors.toList());
     }

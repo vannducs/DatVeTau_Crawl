@@ -32,4 +32,7 @@ public class TrainStation {
 
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex; // 1=HN, 2=Vinh, 3=DN, 4=SG
+
+    @Column(name = "vexere_station_id")
+    private Long vexereStationId; // numeric ID dùng cho API 2 (HNO=102188, SGO=28284, DNA=135548)
 }

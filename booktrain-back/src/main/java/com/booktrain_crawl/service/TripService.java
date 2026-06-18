@@ -1,7 +1,9 @@
 package com.booktrain_crawl.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.booktrain_crawl.dto.SeatDTO;
 import com.booktrain_crawl.dto.TripResultDTO;
@@ -15,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TripService {
@@ -266,8 +269,24 @@ public class TripService {
         }).collect(Collectors.toList());
     }
 
-    public List<Map<String, Object>> getCarriageSeats(Long carriageId) {
-        return seatRepo.findByTripCarriageIdOrderBySeatNumber(carriageId).stream().map(s -> {
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getCarriageSeats(Integer tripId, Long carriageId) {
+        List<TripSeat> seats = seatRepo.findByTripCarriageIdOrderBySeatNumber(carriageId);
+
+        // findConfirmedByTripId dùng JOIN FETCH → tránh LazyInitializationException
+        // khi truy cập tripSeat.id ngoài session
+        Set<Long> bookedSeatIds = bookingRepo.findConfirmedByTripId(tripId).stream()
+                .map(b -> b.getTripSeat().getId())
+                .collect(Collectors.toSet());
+
+        log.info("[SEATS API] tripId={}, carriageId={}, confirmed bookings={}, seats in carriage={}",
+                tripId, carriageId, bookedSeatIds.size(), seats.size());
+
+        return seats.stream().map(s -> {
+            // booked nếu có booking thực hoặc Vexere đánh dấu đã bán lúc crawl
+            String status = (bookedSeatIds.contains(s.getId()) || "booked".equals(s.getStatus()))
+                    ? "booked" : "available";
+
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id",            s.getId());
             m.put("seatNumber",    s.getSeatNumber());
@@ -278,7 +297,7 @@ public class TripService {
             m.put("seatCode",      s.getSeatCode());
             m.put("loaiCho",       s.getLoaiCho());
             m.put("price",         s.getPrice());
-            m.put("status",        s.getStatus());
+            m.put("status",        status);
             return m;
         }).collect(Collectors.toList());
     }

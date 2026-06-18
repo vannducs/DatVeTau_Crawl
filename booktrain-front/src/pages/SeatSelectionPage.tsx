@@ -108,7 +108,9 @@ export default function SeatSelectionPage() {
         );
     }
 
-    // ── Toa ngồi: Grid thật từ Vexere API 2 (5 cột, col 3 = hành lang) ───────────
+    // ── Toa ngồi: Grid thật từ Vexere API 2, XOAY NGANG ────────────────────────────
+    // Vexere data: gridRow = dọc theo toa (1→17), gridCol 1,2 | HL(3) | 4,5
+    // UI: trục ngang = gridRow (toa nằm ngang), trục dọc = gridCol (4 hàng ghế)
     function renderSeatCarriageGrid(seats: SeatDTO[]) {
         const byPos: Record<string, SeatDTO> = {};
         for (const s of seats) {
@@ -116,29 +118,32 @@ export default function SeatSelectionPage() {
                 byPos[`${s.gridRow}-${s.gridCol}`] = s;
         }
 
-        const maxRow = Math.max(...seats.map(s => s.gridRow ?? 0));
-        const maxCol = Math.max(...seats.map(s => s.gridCol ?? 0));
+        const maxRow = Math.max(...seats.map(s => s.gridRow ?? 0)); // 17
+
+        // Render 1 hàng UI = tất cả ghế tại dataCol đó, đi từ gridRow 1→maxRow
+        function renderUiRow(dataCol: number) {
+            return (
+                <div className="ss-seat-ui-row" key={dataCol}>
+                    {Array.from({ length: maxRow }, (_, i) => {
+                        const r = i + 1;
+                        const seat = byPos[`${r}-${dataCol}`];
+                        if (!seat) return <div className="ss-cell-empty" key={r} />;
+                        if (seat.seatCode?.startsWith("B"))
+                            return <div className="ss-cell-table" key={r}>BÀN</div>;
+                        return <SeatBox seat={seat} key={r} />;
+                    })}
+                </div>
+            );
+        }
 
         return (
             <div className="ss-seat-map-wrap">
-                <div className="ss-grid-carriage">
-                    {Array.from({ length: maxRow }, (_, ri) => {
-                        const row = ri + 1;
-                        return (
-                            <div key={row} className="ss-grid-row">
-                                {Array.from({ length: maxCol }, (_, ci) => {
-                                    const col = ci + 1;
-                                    // col 3 (1-indexed) = hành lang dọc
-                                    if (col === 3) return (
-                                        <div key={col} className="ss-grid-aisle" />
-                                    );
-                                    const seat = byPos[`${row}-${col}`];
-                                    if (!seat) return <div key={col} className="ss-grid-empty" />;
-                                    return <SeatBox key={col} seat={seat} />;
-                                })}
-                            </div>
-                        );
-                    })}
+                <div className="ss-seat-carriage-h">
+                    {renderUiRow(1)}
+                    {renderUiRow(2)}
+                    <div className="ss-aisle-h">— H À N H &nbsp; L A N G —</div>
+                    {renderUiRow(4)}
+                    {renderUiRow(5)}
                 </div>
             </div>
         );
@@ -235,38 +240,37 @@ export default function SeatSelectionPage() {
         return (
             <div className="ss-sleeper-wrap">
                 <div className="ss-sleeper-aisle-label">H À N H &nbsp; L A N G</div>
-                <div className="ss-sleeper-grid2">
-                    <div className="ss-tier-labels">
+
+                <div className="ss-sleeper-body">
+                    {/* Cột nhãn tầng — padding-top + gap khớp chính xác với ss-compartment-box */}
+                    <div className="ss-tier-labels-col">
                         {tiers.map(t => (
                             <div key={t.pos} className="ss-tier-label">{t.label}</div>
                         ))}
                     </div>
-                    {khoangList.map(([kNo, kSeats]) => (
-                        <div key={kNo} className="ss-compartment2">
-                            {tiers.map(t => {
-                                const tierSeats = kSeats.filter(s => s.berthPosition === t.pos);
-                                return (
-                                    <div key={t.pos} className="ss-berth-pair">
-                                        {tierSeats.length > 0
-                                            ? tierSeats.map(s => <BerthBox key={s.id} seat={s} />)
-                                            : <div className="ss-berth ss-berth--empty" />}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
-                <div className="ss-compartment-footer">
-                    <div className="ss-tier-label-spacer" />
-                    <div className="ss-compartment-nums">
-                        {khoangList.map(([kNo]) => (
-                            <div key={kNo} className="ss-compartment-num">{kNo}</div>
+
+                    {/* Mỗi khoang = 1 box riêng có viền + label bên dưới */}
+                    <div className="ss-sleeper-khoang-grid">
+                        {khoangList.map(([kNo, kSeats]) => (
+                            <div key={kNo} className="ss-compartment-block">
+                                <div className="ss-compartment-box">
+                                    {tiers.map(t => {
+                                        const tierSeats = kSeats
+                                            .filter(s => s.berthPosition === t.pos)
+                                            .sort((a, b) => a.seatNumber.localeCompare(b.seatNumber));
+                                        return (
+                                            <div key={t.pos} className="ss-berth-row">
+                                                {tierSeats.length > 0
+                                                    ? tierSeats.map(s => <BerthBox key={s.id} seat={s} />)
+                                                    : <div className="ss-berth ss-berth--empty" />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="ss-khoang-label">{kNo}</div>
+                            </div>
                         ))}
                     </div>
-                </div>
-                <div className="ss-khoang-row">
-                    <div className="ss-tier-label-spacer" />
-                    <span className="ss-khoang-text">KHOANG</span>
                 </div>
             </div>
         );

@@ -58,6 +58,6 @@ public class TripController {
     public ResponseEntity<List<Map<String, Object>>> getCarriageSeats(
             @PathVariable Integer tripId,
             @PathVariable Long carriageId) {
-        return ResponseEntity.ok(tripService.getCarriageSeats(carriageId));
+        return ResponseEntity.ok(tripService.getCarriageSeats(tripId, carriageId));
     }
 }

@@ -296,10 +296,35 @@ public class VexereCrawlerService {
                                     && detail.getData().getCoachSeatTemplate() != null) {
                                 List<TripSeat> seats = parseSeatsFromApi2(carriage, carriageType, detail);
                                 if (!seats.isEmpty()) {
-                                    seatRepo.saveAll(seats);
-                                    totalSeats += seats.size();
+                                    List<TripSeat> savedSeats = seatRepo.saveAll(seats);
+                                    totalSeats += savedSeats.size();
                                     api2Success = true;
-                                    log.info("=== API2 OK: toa {} saved {} ghế thật", toa.getId(), seats.size());
+                                    log.info("=== API2 OK: toa {} saved {} ghế thật", toa.getId(), savedSeats.size());
+
+                                    // Mock booking: đánh dấu số ghế đã bán theo tỉ lệ từ API 1
+                                    int realTotal      = carriage.getTotalSeats();
+                                    int availableCount = toa.getSoChoTrong() != null ? toa.getSoChoTrong() : realTotal;
+                                    int soldCount      = realTotal - availableCount;
+
+                                    if (soldCount > 0) {
+                                        List<TripSeat> shuffled = new ArrayList<>(savedSeats);
+                                        java.util.Collections.shuffle(shuffled);
+                                        List<SeatBooking> bookings = new ArrayList<>();
+                                        for (int i = 0; i < Math.min(soldCount, shuffled.size()); i++) {
+                                            bookings.add(SeatBooking.builder()
+                                                    .tripSeat(shuffled.get(i))
+                                                    .trip(trip)
+                                                    .fromStation(from)
+                                                    .toStation(to)
+                                                    .fromOrderIndex(from.getOrderIndex())
+                                                    .toOrderIndex(to.getOrderIndex())
+                                                    .ticketPrice(java.math.BigDecimal.ZERO)
+                                                    .status("confirmed")
+                                                    .build());
+                                        }
+                                        seatBookingRepo.saveAll(bookings);
+                                        log.info("Mocked {} sold seats for carriage {}", bookings.size(), carriage.getId());
+                                    }
                                 }
                             }
                         } catch (Exception e) {

@@ -33,6 +33,7 @@ public class VexereCrawlerService {
     private final TripSegmentPriceRepository priceRepo;
     private final CrawlerLogRepository   crawlerLogRepo;
     private final SeatBookingRepository  seatBookingRepo;
+    private final CrawlerUpsertService   upsertService;
 
     private static final Map<String, String> GROUP_TO_TYPE = Map.of(
             "NGM", "seat",
@@ -127,27 +128,40 @@ public class VexereCrawlerService {
                         ? tripRepo.findByVexereIdIndex(item.getIdIndex())
                         : Optional.empty();
 
+                // ── UPSERT: trip đã tồn tại → cập nhật ──────────────────────────────
                 if (existingOpt.isPresent()) {
                     TrainTrip existing = existingOpt.get();
-                    long carriageCount = carriageRepo.countByTripId(existing.getId());
-                    if (carriageCount == 0) {
-                        log.info("[Crawl] Trip {} (id={}) exists but missing carriages — backfilling",
-                                item.getIdIndex(), existing.getId());
-                        try {
+                    boolean hasRealBooking = seatBookingRepo.existsRealBookingByTripId(existing.getId());
+
+                    // Luôn cập nhật field trip-level (giờ, giá, available, crawled_at)
+                    applyTripFields(existing, item, fromStation, toStation, date);
+                    tripRepo.save(existing);
+
+                    try {
+                        if (hasRealBooking) {
+                            // Có vé thật → KHÔNG xóa seats (booking đang trỏ vào trip_seat_id)
+                            // Chỉ refresh giá segment (UPSERT) cho các toa hiện có
+                            log.info("[Crawl] Trip {} (id={}) có booking thật — chỉ update giá/available, GIỮ ghế",
+                                    item.getIdIndex(), existing.getId());
+                            refreshSegmentPrices(existing, item, fromStation, toStation);
+                        } else {
+                            // Chưa có vé thật → xóa sạch data crawl cũ rồi insert lại (UPSERT)
+                            log.info("[Crawl] Trip {} (id={}) — UPSERT: xóa data cũ + crawl lại",
+                                    item.getIdIndex(), existing.getId());
+                            upsertService.purgeCrawledData(existing.getId());
                             saveCarriagesForTrip(existing, item, fromStation, toStation, bookingCode, date, token);
-                            totalCarriages += itemCarriages;
-                            totalSeats     += itemSeats;
-                        } catch (Exception e) {
-                            log.error("=== Carriage save error for trip {}: ", item.getIdIndex(), e);
-                            if (!"partial".equals(status)) status = "partial";
                         }
-                    } else {
-                        log.info("[Crawl] Trip {} already has {} carriages — skipping",
-                                item.getIdIndex(), carriageCount);
+                        tripsSaved++;
+                        totalCarriages += itemCarriages;
+                        totalSeats     += itemSeats;
+                    } catch (Exception e) {
+                        log.error("=== UPSERT error for trip {}: ", item.getIdIndex(), e);
+                        if (!"partial".equals(status)) status = "partial";
                     }
                     continue;
                 }
 
+                // ── Trip mới → tạo mới ──────────────────────────────────────────────
                 try {
                     saveTripData(item, fromStation, toStation, date, bookingCode, token);
                     tripsSaved++;
@@ -233,13 +247,40 @@ public class VexereCrawlerService {
         saveCarriagesForTrip(trip, item, fromStation, toStation, bookingCode, date, token);
     }
 
-    /** Lưu toa/ghế/giá cho một trip. Dùng cho cả trip mới và backfill. */
-    public void saveCarriagesForTrip(TrainTrip trip, VexereApiResponse.TripData item,
-                                     TrainStation from, TrainStation to,
-                                     String bookingCode, LocalDate date, String token) {
-        log.info("=== TRIP saved id={} | listToaXe={}", trip.getId(),
-                item.getListToaXe() == null ? "NULL" : item.getListToaXe().size());
+    /** Cập nhật field trip-level từ data crawl mới (dùng cho UPSERT). */
+    private void applyTripFields(TrainTrip trip, VexereApiResponse.TripData item,
+                                 TrainStation from, TrainStation to, LocalDate date) {
+        String depTime    = item.getTime()        != null ? item.getTime()        : "00:00:00";
+        String arrDateStr = item.getArrivalDate()  != null ? item.getArrivalDate() : date.toString();
+        String arrTime    = item.getArrivalTime()  != null ? item.getArrivalTime() : "00:00:00";
+        if (depTime.length() == 5) depTime += ":00";
+        if (arrTime.length() == 5) arrTime += ":00";
 
+        trip.setFromStation(from);
+        trip.setToStation(to);
+        trip.setDepartureDatetime(OffsetDateTime.parse(date      + "T" + depTime + "+07:00"));
+        trip.setArrivalDatetime(OffsetDateTime.parse(arrDateStr + "T" + arrTime + "+07:00"));
+        trip.setDurationMinutes(item.getDuration());
+        trip.setMinPrice(item.getMinPrice());
+        trip.setMaxPrice(item.getMaxPrice());
+        trip.setAvailableSeats(item.getSeatAvailable() != null ? item.getSeatAvailable() : 0);
+        trip.setVexereTrainId(item.getTrainId());
+        trip.setVexereSession(item.getSession());
+        trip.setCrawledAt(OffsetDateTime.now());
+    }
+
+    /** Refresh giá segment (UPSERT) cho các toa hiện có — dùng khi trip có booking thật, không xóa ghế. */
+    private void refreshSegmentPrices(TrainTrip trip, VexereApiResponse.TripData item,
+                                      TrainStation from, TrainStation to) {
+        Map<String, List<Long>> groupPrices = buildGroupPrices(item);
+        for (TripCarriage tc : carriageRepo.findByTripIdOrderByCarriageOrder(trip.getId())) {
+            String nhom = tc.getSeatGroup() != null ? tc.getSeatGroup() : "NGM";
+            savePrices(trip, from, to, tc.getCarriageType(), nhom, groupPrices);
+        }
+    }
+
+    /** Build map nhomCho → list giá từ seat_group_status. */
+    private Map<String, List<Long>> buildGroupPrices(VexereApiResponse.TripData item) {
         Map<String, List<Long>> groupPrices = new HashMap<>();
         if (item.getSeatGroupStatus() != null) {
             for (VexereApiResponse.SeatGroupStatus sg : item.getSeatGroupStatus()) {
@@ -247,6 +288,17 @@ public class VexereCrawlerService {
                     groupPrices.put(sg.getType(), sg.getPrices());
             }
         }
+        return groupPrices;
+    }
+
+    /** Lưu toa/ghế/giá cho một trip. Dùng cho cả trip mới và backfill. */
+    public void saveCarriagesForTrip(TrainTrip trip, VexereApiResponse.TripData item,
+                                     TrainStation from, TrainStation to,
+                                     String bookingCode, LocalDate date, String token) {
+        log.info("=== TRIP saved id={} | listToaXe={}", trip.getId(),
+                item.getListToaXe() == null ? "NULL" : item.getListToaXe().size());
+
+        Map<String, List<Long>> groupPrices = buildGroupPrices(item);
 
         long fromStId = getVexereStationId(from);
         long toStId   = getVexereStationId(to);

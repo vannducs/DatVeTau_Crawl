@@ -153,22 +153,23 @@ public class OrderService {
         String tripStatus = (depTime != null && depTime.isAfter(OffsetDateTime.now(VN)))
                 ? "upcoming" : "completed";
 
+        // Convert sang giờ VN trước khi format — DB trả timestamptz dạng UTC, tránh lệch 7h
         return new OrderSummaryDto(
                 rs.getString("order_code"),
                 rs.getString("status"),
                 tripStatus,
                 rs.getLong("total_amount"),
                 rs.getLong("service_fee"),
-                created != null ? created.format(FMT) : "",
+                created != null ? created.toInstant().atZone(VN).format(FMT) : "",
                 rs.getString("train_code"),
                 rs.getString("train_name"),
                 rs.getString("origin_name"),
                 rs.getString("destination_name"),
-                depTime != null ? depTime.format(FMT) : "",
-                arrTime != null ? arrTime.format(FMT) : "",
+                depTime != null ? depTime.toInstant().atZone(VN).format(FMT) : "",
+                arrTime != null ? arrTime.toInstant().atZone(VN).format(FMT) : "",
                 rs.getString("payment_method"),
                 rs.getString("transaction_code"),
-                paidAt  != null ? paidAt.format(FMT)  : null,
+                paidAt  != null ? paidAt.toInstant().atZone(VN).format(FMT)  : null,
                 rs.getString("note"),
                 passengerMap.getOrDefault(id, List.of())
         );

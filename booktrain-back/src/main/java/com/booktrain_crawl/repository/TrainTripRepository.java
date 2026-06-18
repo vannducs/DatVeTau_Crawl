@@ -25,24 +25,25 @@ public interface TrainTripRepository extends JpaRepository<TrainTrip, Integer> {
     Optional<TrainTrip> findTopByTrainIdAndStatusNotOrderByDepartureDatetimeDesc(
             Integer trainId, String status);
 
+    /**
+     * Search CHÍNH XÁC theo cặp ga: mỗi trip Vexere là 1 OD pair riêng biệt
+     * (SE5 HN→VI, HN→DN, HN→SG là 3 trip khác nhau). PHẢI khớp đúng cả from_id và to_id.
+     */
     @Query("""
         SELECT t FROM TrainTrip t
         JOIN FETCH t.train
         JOIN FETCH t.fromStation
         JOIN FETCH t.toStation
         WHERE t.status = 'open'
+          AND t.fromStation.id = :fromId
+          AND t.toStation.id   = :toId
           AND CAST(t.departureDatetime AS date) = :date
-          AND (
-            (t.fromStation.orderIndex <= :fromOrderIndex AND t.toStation.orderIndex >= :toOrderIndex)
-            OR
-            (t.fromStation.orderIndex >= :fromOrderIndex AND t.toStation.orderIndex <= :toOrderIndex)
-          )
         ORDER BY t.departureDatetime ASC
     """)
-    List<TrainTrip> findOpenTripsForSegment(
-            @Param("fromOrderIndex") Integer fromOrderIndex,
-            @Param("toOrderIndex")   Integer toOrderIndex,
-            @Param("date")           LocalDate date
+    List<TrainTrip> findOpenTripsExact(
+            @Param("fromId") Integer fromId,
+            @Param("toId")   Integer toId,
+            @Param("date")   LocalDate date
     );
 
     @Query("""

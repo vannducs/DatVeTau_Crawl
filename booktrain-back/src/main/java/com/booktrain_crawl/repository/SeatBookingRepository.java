@@ -1,6 +1,7 @@
 package com.booktrain_crawl.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,4 +40,13 @@ public interface SeatBookingRepository extends JpaRepository<SeatBooking, Intege
 
     @Query("SELECT COUNT(sb) > 0 FROM SeatBooking sb WHERE sb.trip.id IN :tripIds")
     boolean existsByTripIdIn(@Param("tripIds") List<Integer> tripIds);
+
+    /** Có booking THẬT (user đặt, ticket_price > 0) cho trip không? */
+    @Query("SELECT COUNT(sb) > 0 FROM SeatBooking sb WHERE sb.trip.id = :tripId AND sb.ticketPrice > 0")
+    boolean existsRealBookingByTripId(@Param("tripId") Integer tripId);
+
+    /** Xóa các booking mock do crawler tạo (ticket_price = 0). GIỮ booking thật. */
+    @Modifying
+    @Query("DELETE FROM SeatBooking sb WHERE sb.trip.id = :tripId AND sb.ticketPrice <= 0")
+    void deleteMockByTripId(@Param("tripId") Integer tripId);
 }

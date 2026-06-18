@@ -38,12 +38,10 @@ interface LookupResult {
 
 function formatDateTime(dt: string | undefined | null) {
     if (!dt) return "—";
-    const d = new Date(dt);
-    const dd = d.getDate().toString().padStart(2, "0");
-    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
-    const hh = d.getHours().toString().padStart(2, "0");
-    const min = d.getMinutes().toString().padStart(2, "0");
-    return `${hh}:${min} — ${dd}/${mm}/${d.getFullYear()}`;
+    // Backend trả sẵn giờ VN dạng "HH:mm dd/MM/yyyy" — hiển thị thẳng, KHÔNG new Date()
+    const parts = dt.trim().split(" ");
+    if (parts.length === 2) return `${parts[0]} — ${parts[1]}`;
+    return dt;
 }
 
 function formatMoney(n: number | null | undefined) {

@@ -1,6 +1,7 @@
 package com.booktrain_crawl.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +15,11 @@ public interface TripSegmentPriceRepository extends JpaRepository<TripSegmentPri
     List<TripSegmentPrice> findByTripIdAndFromStationIdAndToStationId(
             Integer tripId, Integer fromStationId, Integer toStationId);
     void deleteByTripId(Integer tripId);
+
+    /** Xóa toàn bộ giá segment của 1 trip (bulk). */
+    @Modifying
+    @Query("DELETE FROM TripSegmentPrice p WHERE p.trip.id = :tripId")
+    void deleteByTripIdBulk(@Param("tripId") Integer tripId);
 
     @Query("""
         SELECT p FROM TripSegmentPrice p

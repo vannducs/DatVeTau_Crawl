@@ -8,12 +8,24 @@ import org.springframework.web.bind.annotation.*;
 import com.booktrain_crawl.entity.*;
 import com.booktrain_crawl.repository.*;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
 public class TicketLookupController {
+
+    // Backend = nguồn chân lý giờ VN; trả string "HH:mm dd/MM/yyyy", frontend không tự parse
+    private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+
+    private static String fmtVN(OffsetDateTime dt) {
+        return dt == null ? "" : dt.toInstant().atZone(VN).format(FMT);
+    }
+
 
     private final OrderRepository      orderRepo;
     private final OrderItemRepository  orderItemRepo;
@@ -52,8 +64,8 @@ public class TicketLookupController {
                 trainName = train.getTrainName();
                 originName = sb.getFromStation().getName();
                 destinationName = sb.getToStation().getName();
-                departureTime = trip.getDepartureDatetime().toString();
-                arrivalTime   = trip.getArrivalDatetime().toString();
+                departureTime = fmtVN(trip.getDepartureDatetime());
+                arrivalTime   = fmtVN(trip.getArrivalDatetime());
             }
 
             Map<String, Object> p = new LinkedHashMap<>();
@@ -83,7 +95,7 @@ public class TicketLookupController {
         result.put("paymentMethod",   payment != null ? payment.getPaymentMethod() : null);
         result.put("transactionCode", payment != null ? payment.getTransactionCode() : null);
         result.put("paidAt",          payment != null && payment.getPaidAt() != null
-                                      ? payment.getPaidAt().toString() : null);
+                                      ? fmtVN(payment.getPaidAt()) : null);
 
         return ResponseEntity.ok(result);
     }

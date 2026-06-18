@@ -13,6 +13,8 @@ import com.booktrain_crawl.repository.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ public class TripService {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh"); // backend = nguồn chân lý giờ VN
 
     // ─── Duration helpers ────────────────────────────────────────────────────────
 
@@ -85,10 +88,16 @@ public class TripService {
             throw new RuntimeException("Ga đi và ga đến phải khác nhau");
 
         List<TrainStation> allStations = stationRepo.findAllByOrderByOrderIndexAsc();
-        List<TrainTrip> trips = tripRepo.findOpenTripsForSegment(
-                fromSt.getOrderIndex(), toSt.getOrderIndex(), date);
+        // Khớp CHÍNH XÁC cặp ga (from_id + to_id) — tránh trả nhầm trip cùng tàu khác đích đến
+        List<TrainTrip> trips = tripRepo.findOpenTripsExact(fromStationId, toStationId, date);
 
+        // Loại trùng: cùng trainCode + departure + to_station → 1 kết quả
+        Set<String> seen = new HashSet<>();
         return trips.stream()
+                .filter(t -> seen.add(
+                        t.getTrain().getTrainCode() + "|" +
+                        t.getDepartureDatetime()    + "|" +
+                        t.getToStation().getId()))
                 .map(trip -> buildTripResult(trip, fromSt, toSt, allStations))
                 .collect(Collectors.toList());
     }
@@ -106,12 +115,12 @@ public class TripService {
 
     private TripResultDTO buildTripResult(TrainTrip trip, TrainStation fromSt,
                                           TrainStation toSt, List<TrainStation> allStations) {
-        int minsToBoard  = calcMinutesFromTripStart(trip, fromSt.getOrderIndex(), allStations);
-        int minsToAlight = calcMinutesFromTripStart(trip, toSt.getOrderIndex(),   allStations);
-
-        OffsetDateTime boardTime  = trip.getDepartureDatetime().plusMinutes(minsToBoard);
-        OffsetDateTime alightTime = trip.getDepartureDatetime().plusMinutes(minsToAlight);
-        int durationMins = minsToAlight - minsToBoard;
+        // Mỗi trip Vexere đã là OD pair chính xác → dùng trực tiếp giờ + duration từ DB.
+        // Convert sang giờ VN (Asia/Ho_Chi_Minh) trước khi format — tránh lệch 7h do DB trả UTC.
+        ZonedDateTime boardTime  = trip.getDepartureDatetime().toInstant().atZone(VN);
+        ZonedDateTime alightTime = trip.getArrivalDatetime() != null
+                ? trip.getArrivalDatetime().toInstant().atZone(VN) : boardTime;
+        int durationMins = trip.getDurationMinutes() != null ? trip.getDurationMinutes() : 0;
         String durationStr = (durationMins / 60) + "h " + (durationMins % 60) + "p";
         boolean nextDay = !boardTime.toLocalDate().equals(alightTime.toLocalDate());
 

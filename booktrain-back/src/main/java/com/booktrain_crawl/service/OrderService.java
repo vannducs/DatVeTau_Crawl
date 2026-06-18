@@ -73,18 +73,14 @@ public class OrderService {
             SELECT oi.order_id,
                    oi.passenger_name, oi.id_number, oi.ticket_price,
                    s.seat_number,
-                   tca.carriage_order AS carriage_number,
-                   c.carriage_type
+                   tc.carriage_order AS carriage_number,
+                   tc.carriage_type
             FROM orders o
-            JOIN users u                        ON u.id          = o.customer_id
-            JOIN order_items oi                 ON oi.order_id   = o.id
-            JOIN seat_bookings sb               ON sb.id         = oi.seat_booking_id
-            JOIN seats s                        ON s.id          = sb.seat_id
-            JOIN carriages c                    ON c.id          = s.carriage_id
-            JOIN train_trips tt                 ON tt.id         = sb.trip_id
-            JOIN train_carriage_assignments tca ON tca.train_id    = tt.train_id
-                                               AND tca.carriage_id = s.carriage_id
-                                               AND tca.unassigned_at IS NULL
+            JOIN users u            ON u.id          = o.customer_id
+            JOIN order_items oi     ON oi.order_id   = o.id
+            JOIN seat_bookings sb   ON sb.id         = oi.seat_booking_id
+            JOIN trip_seats s       ON s.id          = sb.trip_seat_id
+            JOIN trip_carriages tc  ON tc.id         = s.trip_carriage_id
             WHERE u.email = ?
             """;
 
@@ -92,18 +88,14 @@ public class OrderService {
             SELECT oi.order_id,
                    oi.passenger_name, oi.id_number, oi.ticket_price,
                    s.seat_number,
-                   tca.carriage_order AS carriage_number,
-                   c.carriage_type
+                   tc.carriage_order AS carriage_number,
+                   tc.carriage_type
             FROM orders o
-            JOIN users u                        ON u.id          = o.customer_id
-            JOIN order_items oi                 ON oi.order_id   = o.id
-            JOIN seat_bookings sb               ON sb.id         = oi.seat_booking_id
-            JOIN seats s                        ON s.id          = sb.seat_id
-            JOIN carriages c                    ON c.id          = s.carriage_id
-            JOIN train_trips tt                 ON tt.id         = sb.trip_id
-            JOIN train_carriage_assignments tca ON tca.train_id    = tt.train_id
-                                               AND tca.carriage_id = s.carriage_id
-                                               AND tca.unassigned_at IS NULL
+            JOIN users u            ON u.id          = o.customer_id
+            JOIN order_items oi     ON oi.order_id   = o.id
+            JOIN seat_bookings sb   ON sb.id         = oi.seat_booking_id
+            JOIN trip_seats s       ON s.id          = sb.trip_seat_id
+            JOIN trip_carriages tc  ON tc.id         = s.trip_carriage_id
             WHERE u.email = ? AND o.order_code = ?
             """;
 

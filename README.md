@@ -15,7 +15,7 @@ Hệ thống được phát triển để thực hành các kiến thức về:
 * Kỹ thuật thu thập dữ liệu (Web Crawling)
 
 ## Chức năng chính
-* Tra cứu chuyến tàu theo ga đi, ga đến và ngày khởi hành
+* Tra cứu chuyến tàu theo ga đi, ga đến và ngày khởi hành cho 4 ga cố định là Hà Nội - Vinh - Đà Nẵng - Sài Gòn
 * Hiển thị thông tin chuyến tàu, giá vé và tình trạng ghế
 * Chọn ghế và đặt vé
 * Quản lý thông tin người dùng
@@ -69,6 +69,4 @@ Dự án không sở hữu các dữ liệu này và mọi quyền liên quan th
 Dự án được xây dựng nhằm nâng cao kỹ năng phát triển phần mềm, làm quen với quy trình xây dựng hệ thống thực tế và áp dụng các kiến thức đã học vào một bài toán cụ thể trong lĩnh vực đặt vé trực tuyến.
 
 ## Tác giả
-Nguyễn Văn Đức
-Sinh viên Công nghệ Thông tin
-Dự án được thực hiện phục vụ mục đích học tập và nghiên cứu.
+Nguyễn Văn Đức - Sinh viên Công nghệ Thông tin

@@ -21,42 +21,31 @@ export const dashboardApi = {
 };
 
 // ─── Trains ──────────────────────────────────────────────────────────────────
+// ĐỢT 1 cleanup: đã bỏ các method trỏ endpoint đã xóa (carriage/seat CRUD + validate
+// + carriages) vì schema mới quản lý toa/ghế qua crawler Vexere, không CRUD thủ công.
 export const trainAdminApi = {
     list:             ()                          => api.get("/trains"),
     detail:           (id: number)                => api.get(`/trains/${id}`),
     create:           (body: object)              => api.post("/trains", body),
     update:           (id: number, body: object)  => api.put(`/trains/${id}`, body),
     delete:           (id: number)                => api.delete(`/trains/${id}`),
-    validate:         (id: number)                => api.get(`/trains/${id}/validate`),
     tripStatus:       (trainId: number)           => api.get(`/trains/${trainId}/trip-status`),
-    carriages:        (trainId: number)           => api.get(`/trains/${trainId}/carriages`),
     availableStations:(trainId: number)           => api.get(`/trains/${trainId}/available-stations`),
     scheduleDuration: (trainId: number, originId: number, destinationId: number) =>
         api.get(`/trains/${trainId}/schedule-duration`, { params: { originId, destinationId } }),
-    addCarriage:    (trainId: number, body: object)   => api.post(`/trains/${trainId}/carriages`, body),
-    updateCarriage: (carriageId: number, body: object) => api.put(`/carriages/${carriageId}`, body),
-    deleteCarriage: (carriageId: number)               => api.delete(`/carriages/${carriageId}`),
-    addSeat:        (carriageId: number, body: object) => api.post(`/carriages/${carriageId}/seats`, body),
-    deleteSeat:     (seatId: number)                   => api.delete(`/seats/${seatId}`),
 };
 
-// ─── Trips ───────────────────────────────────────────────────────────────────
+// ─── Trips (ĐỢT 2B: quản lý chuyến đã crawl — read-only + ẩn/xóa) ───────────────
 export const tripAdminApi = {
-    list:       (params: object)               => api.get("/trips", { params }),
-    detail:     (id: number)                   => api.get(`/trips/${id}`),
-    cancelInfo: (tripId: number)               => api.get(`/trips/${tripId}/cancel-info`),
-    create:     (body: object)                 => api.post("/trips", body),
-    cancel:     (tripId: number, body: object) => api.put(`/trips/${tripId}/cancel`, body),
-    trainList:  ()                             => api.get("/trips/trains"),
+    list:         (params: object)   => api.get("/trips", { params }),
+    toggleHidden: (tripId: number)   => api.put(`/trips/${tripId}/toggle-hidden`),
+    remove:       (tripId: number)   => api.delete(`/trips/${tripId}`),
 };
 
-// ─── Locations ───────────────────────────────────────────────────────────────
+// ─── Locations (READ-ONLY, ĐỢT 2) ─────────────────────────────────────────────
+// Chỉ còn list (GET /api/admin/locations) — schema mới không CRUD ga thủ công.
 export const locationAdminApi = {
-    list:      (search = "") => api.get("/locations", { params: { search } }),
-    provinces: ()            => api.get("/locations/provinces"),
-    create:    (body: object) => api.post("/locations", body),
-    update:    (id: number, body: object) => api.put(`/locations/${id}`, body),
-    delete:    (id: number)  => api.delete(`/locations/${id}`),
+    list: () => api.get("/locations"),
 };
 
 // ─── Users ───────────────────────────────────────────────────────────────────

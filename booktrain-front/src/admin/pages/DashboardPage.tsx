@@ -1,4 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
+import {
+    MdPeople, MdReceiptLong, MdPayments, MdTrain, MdTrendingUp,
+    MdEmojiEvents, MdListAlt, MdRefresh,
+} from "react-icons/md";
 import { dashboardApi } from "../api/adminApi";
 import StatCard from "../components/StatCard";
 import RevenueChart from "../components/RevenueChart";
@@ -72,23 +76,28 @@ export default function DashboardPage() {
                     <div className="admin-page-title">Dashboard</div>
                     <div className="admin-page-subtitle">Tổng quan hệ thống — tự động cập nhật mỗi 30 giây</div>
                 </div>
-                <button className="admin-btn admin-btn-outline admin-btn-sm" onClick={fetchAll}>
-                    🔄 Làm mới
+                <button className="admin-btn admin-btn-outline admin-btn-sm" onClick={fetchAll}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <MdRefresh size={18} />
+                    Làm mới
                 </button>
             </div>
 
             {/* Row 1: Stat Cards */}
             <div className="admin-stats-grid">
-                <StatCard label="Tổng người dùng"  value={fmt(summary!.totalUsers)}   icon="👥" color="#2F6FED" sub={`+${summary!.newUsersToday} hôm nay`} />
-                <StatCard label="Tổng đơn hàng"    value={fmt(summary!.totalOrders)}  icon="📦" color="#16A34A" sub={`+${summary!.ordersToday} hôm nay`} />
-                <StatCard label="Doanh thu (tổng)"  value={fmt(summary!.totalRevenue) + "đ"} icon="💰" color="#FFC107" sub={`${fmt(summary!.revenueToday)}đ hôm nay`} />
-                <StatCard label="Chuyến tàu"        value={fmt(summary!.totalTrips)}   icon="🚂" color="#8B5CF6" />
+                <StatCard label="Tổng người dùng"  value={fmt(summary!.totalUsers)}   icon={<MdPeople size={28} color="#2F6FED" />}      color="#2F6FED" sub={`+${summary!.newUsersToday} hôm nay`} />
+                <StatCard label="Tổng đơn hàng"    value={fmt(summary!.totalOrders)}  icon={<MdReceiptLong size={28} color="#16A34A" />} color="#16A34A" sub={`+${summary!.ordersToday} hôm nay`} />
+                <StatCard label="Doanh thu (tổng)"  value={fmt(summary!.totalRevenue) + "đ"} icon={<MdPayments size={28} color="#FFC107" />} color="#FFC107" sub={`${fmt(summary!.revenueToday)}đ hôm nay`} />
+                <StatCard label="Chuyến tàu"        value={fmt(summary!.totalTrips)}   icon={<MdTrain size={28} color="#8B5CF6" />}       color="#8B5CF6" />
             </div>
 
             {/* Row 2: Revenue Chart */}
             <div className="admin-card">
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                    <span className="admin-card-title" style={{ margin: 0 }}>📈 Doanh thu</span>
+                    <span className="admin-card-title" style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <MdTrendingUp size={20} color="#16A34A" />
+                        Doanh thu
+                    </span>
                     <select
                         className="admin-select"
                         value={revType}
@@ -108,7 +117,10 @@ export default function DashboardPage() {
             <div className="admin-grid-2">
                 {/* Top 5 khách hàng */}
                 <div className="admin-card">
-                    <div className="admin-card-title">🏆 Top 5 khách hàng</div>
+                    <div className="admin-card-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <MdEmojiEvents size={20} color="#FFC107" />
+                        Top 5 khách hàng
+                    </div>
                     <table className="admin-table">
                         <thead>
                             <tr>
@@ -122,9 +134,15 @@ export default function DashboardPage() {
                             {customers.map((c, i) => (
                                 <tr key={c.user_id}>
                                     <td>
-                                        <span style={{ fontWeight: 700, color: i === 0 ? "#FFC107" : i === 1 ? "#9CA3AF" : i === 2 ? "#B45309" : "#6B7280" }}>
-                                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
-                                        </span>
+                                        {i < 3 ? (
+                                            <MdEmojiEvents
+                                                size={20}
+                                                style={{ verticalAlign: "middle" }}
+                                                color={i === 0 ? "#FFC107" : i === 1 ? "#9CA3AF" : "#B45309"}
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: 700, color: "#6B7280" }}>#{i + 1}</span>
+                                        )}
                                     </td>
                                     <td>
                                         <div style={{ fontWeight: 600, fontSize: 13 }}>{c.full_name}</div>
@@ -142,14 +160,20 @@ export default function DashboardPage() {
 
                 {/* Biểu đồ lấp đầy */}
                 <div className="admin-card">
-                    <div className="admin-card-title">🚂 Tỉ lệ lấp đầy chuyến tàu</div>
+                    <div className="admin-card-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <MdTrain size={20} color="#8B5CF6" />
+                        Tỉ lệ lấp đầy chuyến tàu
+                    </div>
                     <OccupancyChart data={occupancy as Parameters<typeof OccupancyChart>[0]["data"]} />
                 </div>
             </div>
 
             {/* Row 4: Recent orders */}
             <div className="admin-card">
-                <div className="admin-card-title">📋 Đơn hàng mới nhất</div>
+                <div className="admin-card-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <MdListAlt size={20} color="#2F6FED" />
+                    Đơn hàng mới nhất
+                </div>
                 <div className="admin-table-wrapper">
                     <table className="admin-table">
                         <thead>

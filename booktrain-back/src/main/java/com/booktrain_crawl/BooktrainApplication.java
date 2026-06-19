@@ -2,10 +2,9 @@ package com.booktrain_crawl;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
+// Đã bỏ @EnableScheduling: không còn auto-crawl. Crawl chỉ chạy thủ công qua CrawlerController.
 @SpringBootApplication
-@EnableScheduling
 public class BooktrainApplication {
 
 	public static void main(String[] args) {

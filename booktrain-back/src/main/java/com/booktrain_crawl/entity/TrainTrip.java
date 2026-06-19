@@ -65,6 +65,13 @@ public class TrainTrip {
     @Column(nullable = false, length = 20)
     private String status;
 
+    // Admin ẩn chuyến khỏi search công khai (crawl lại KHÔNG ghi đè)
+    // KHÔNG để nullable=false: tránh Hibernate ddl-auto=update fail khi ADD COLUMN
+    // trên bảng đã có dữ liệu (NOT NULL không default → PostgreSQL từ chối).
+    @Column(name = "is_hidden")
+    @Builder.Default
+    private Boolean isHidden = false;
+
     @Column(name = "created_by")
     private Integer createdBy;
 
@@ -83,6 +90,7 @@ public class TrainTrip {
     @PrePersist
     protected void onCreate() {
         if (status == null) status = "open";
+        if (isHidden == null) isHidden = false;
         createdAt = OffsetDateTime.now();
     }
 }

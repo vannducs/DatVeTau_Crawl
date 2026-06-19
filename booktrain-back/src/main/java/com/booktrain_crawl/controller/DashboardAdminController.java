@@ -98,19 +98,20 @@ public class DashboardAdminController {
     public ResponseEntity<List<Map<String, Object>>> popularRoutes(
             @RequestParam(defaultValue = "10") int limit) {
 
+        // Schema mới: order_items → seat_bookings → train_trips → train_stations
         String sql = """
-                SELECT l1.name                          AS origin_name,
-                       l2.name                          AS destination_name,
-                       COUNT(oi.id)                     AS total_bookings,
+                SELECT s_from.name                       AS origin_name,
+                       s_to.name                         AS destination_name,
+                       COUNT(oi.id)                      AS total_bookings,
                        COALESCE(SUM(oi.ticket_price), 0) AS revenue
                 FROM order_items oi
-                JOIN train_seats  ts ON ts.id = oi.train_seat_id
-                JOIN train_trips  tt ON tt.id = ts.trip_id
-                JOIN locations    l1 ON l1.id = tt.origin_id
-                JOIN locations    l2 ON l2.id = tt.destination_id
-                JOIN orders        o ON o.id  = oi.order_id
+                JOIN orders          o      ON o.id      = oi.order_id
+                JOIN seat_bookings   sb     ON sb.id     = oi.seat_booking_id
+                JOIN train_trips     tt     ON tt.id     = sb.trip_id
+                JOIN train_stations  s_from ON s_from.id = tt.from_station_id
+                JOIN train_stations  s_to   ON s_to.id   = tt.to_station_id
                 WHERE o.status = 'paid'
-                GROUP BY l1.name, l2.name
+                GROUP BY s_from.name, s_to.name
                 ORDER BY total_bookings DESC
                 LIMIT ?
                 """;
@@ -180,19 +181,21 @@ public class DashboardAdminController {
     /** GET /api/admin/dashboard/train-occupancy */
     @GetMapping("/train-occupancy")
     public ResponseEntity<List<Map<String, Object>>> trainOccupancy() {
+        // Schema mới: trip_seats nối qua trip_carriages.trip_id; ghế đã bán = trip_seats.status='booked'
         String sql = """
                 SELECT tt.id,
                        tr.train_code,
-                       tt.departure_time,
+                       tt.departure_datetime                                      AS departure_time,
                        COUNT(ts.id)                                               AS total_seats,
                        COUNT(CASE WHEN ts.status = 'booked' THEN 1 END)           AS booked_seats,
                        ROUND(COUNT(CASE WHEN ts.status = 'booked' THEN 1 END) * 100.0
                            / NULLIF(COUNT(ts.id), 0), 1)                          AS occupancy_rate
-                FROM train_trips tt
-                JOIN trains      tr ON tr.id  = tt.train_id
-                JOIN train_seats ts ON ts.trip_id = tt.id
-                GROUP BY tt.id, tr.train_code, tt.departure_time
-                ORDER BY tt.departure_time DESC
+                FROM train_trips    tt
+                JOIN trains         tr ON tr.id = tt.train_id
+                JOIN trip_carriages tc ON tc.trip_id = tt.id
+                JOIN trip_seats     ts ON ts.trip_carriage_id = tc.id
+                GROUP BY tt.id, tr.train_code, tt.departure_datetime
+                ORDER BY tt.departure_datetime DESC
                 LIMIT 30
                 """;
 

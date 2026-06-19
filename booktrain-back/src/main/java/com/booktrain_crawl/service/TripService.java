@@ -36,46 +36,6 @@ public class TripService {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh"); // backend = nguồn chân lý giờ VN
 
-    // ─── Duration helpers ────────────────────────────────────────────────────────
-
-    private int calcMinutesFromTripStart(TrainTrip trip, int targetOrderIndex,
-                                         List<TrainStation> allStations) {
-        int tripFromIdx = trip.getFromStation().getOrderIndex();
-        int tripToIdx   = trip.getToStation().getOrderIndex();
-        boolean northToSouth = tripFromIdx < tripToIdx;
-
-        List<TrainStation> sorted = allStations.stream()
-                .sorted(Comparator.comparingInt(TrainStation::getOrderIndex))
-                .toList();
-
-        int total = 0;
-        if (northToSouth) {
-            for (int i = 0; i < sorted.size() - 1; i++) {
-                TrainStation a = sorted.get(i);
-                TrainStation b = sorted.get(i + 1);
-                if (a.getOrderIndex() >= tripFromIdx && b.getOrderIndex() <= targetOrderIndex) {
-                    Optional<TrainSegment> seg =
-                            segmentRepo.findByFromStationIdAndToStationId(a.getId(), b.getId());
-                    if (seg.isPresent()) total += seg.get().getDurationMinutes();
-                }
-            }
-        } else {
-            List<TrainStation> reversed = sorted.stream()
-                    .sorted(Comparator.comparingInt(TrainStation::getOrderIndex).reversed())
-                    .toList();
-            for (int i = 0; i < reversed.size() - 1; i++) {
-                TrainStation a = reversed.get(i);
-                TrainStation b = reversed.get(i + 1);
-                if (a.getOrderIndex() <= tripFromIdx && b.getOrderIndex() >= targetOrderIndex) {
-                    Optional<TrainSegment> seg =
-                            segmentRepo.findByFromStationIdAndToStationId(a.getId(), b.getId());
-                    if (seg.isPresent()) total += seg.get().getDurationMinutes();
-                }
-            }
-        }
-        return total;
-    }
-
     // ─── Search ─────────────────────────────────────────────────────────────────
 
     public List<TripResultDTO> searchTrips(Integer fromStationId, Integer toStationId, LocalDate date) {
@@ -87,7 +47,6 @@ public class TripService {
         if (fromSt.getOrderIndex().equals(toSt.getOrderIndex()))
             throw new RuntimeException("Ga đi và ga đến phải khác nhau");
 
-        List<TrainStation> allStations = stationRepo.findAllByOrderByOrderIndexAsc();
         // Khớp CHÍNH XÁC cặp ga (from_id + to_id) — tránh trả nhầm trip cùng tàu khác đích đến
         List<TrainTrip> trips = tripRepo.findOpenTripsExact(fromStationId, toStationId, date);
 
@@ -98,7 +57,7 @@ public class TripService {
                         t.getTrain().getTrainCode() + "|" +
                         t.getDepartureDatetime()    + "|" +
                         t.getToStation().getId()))
-                .map(trip -> buildTripResult(trip, fromSt, toSt, allStations))
+                .map(trip -> buildTripResult(trip, fromSt, toSt))
                 .collect(Collectors.toList());
     }
 
@@ -109,12 +68,11 @@ public class TripService {
                 .orElseThrow(() -> new RuntimeException("Ga đi không tồn tại"));
         TrainStation toSt   = stationRepo.findById(toStationId)
                 .orElseThrow(() -> new RuntimeException("Ga đến không tồn tại"));
-        List<TrainStation> allStations = stationRepo.findAllByOrderByOrderIndexAsc();
-        return buildTripResult(trip, fromSt, toSt, allStations);
+        return buildTripResult(trip, fromSt, toSt);
     }
 
     private TripResultDTO buildTripResult(TrainTrip trip, TrainStation fromSt,
-                                          TrainStation toSt, List<TrainStation> allStations) {
+                                          TrainStation toSt) {
         // Mỗi trip Vexere đã là OD pair chính xác → dùng trực tiếp giờ + duration từ DB.
         // Convert sang giờ VN (Asia/Ho_Chi_Minh) trước khi format — tránh lệch 7h do DB trả UTC.
         ZonedDateTime boardTime  = trip.getDepartureDatetime().toInstant().atZone(VN);

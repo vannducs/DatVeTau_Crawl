@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.booktrain_crawl.crawler.CrawlerUpsertService;
 import com.booktrain_crawl.dto.CancelTripRequest;
 import com.booktrain_crawl.entity.*;
 import com.booktrain_crawl.repository.*;
@@ -43,6 +44,7 @@ public class TripAdminController {
     private final AdminLogRepository         adminLogRepo;
     private final TripService                tripService;
     private final PasswordEncoder            passwordEncoder;
+    private final CrawlerUpsertService       upsertService;
 
     private static String formatCurrency(java.math.BigDecimal amount) {
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
@@ -57,6 +59,8 @@ public class TripAdminController {
             @RequestParam(defaultValue = "10") int     size,
             @RequestParam(required = false)    String  status,
             @RequestParam(required = false)    Integer trainId,
+            @RequestParam(required = false)    Integer fromStationId,
+            @RequestParam(required = false)    Integer toStationId,
             @RequestParam(required = false)    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         // Empty string → null (frontend gửi "" khi chưa chọn filter)
@@ -78,10 +82,21 @@ public class TripAdminController {
 
         final String fStatus = status;
         if (fStatus != null) {
-            all = all.stream().filter(t -> fStatus.equals(effectiveStatus.apply(t))).toList();
+            if ("hidden".equals(fStatus)) {
+                // Lọc riêng chuyến đã ẩn (cross-cutting với open/completed/cancelled)
+                all = all.stream().filter(t -> Boolean.TRUE.equals(t.getIsHidden())).toList();
+            } else {
+                all = all.stream().filter(t -> fStatus.equals(effectiveStatus.apply(t))).toList();
+            }
         }
         if (trainId != null) {
             all = all.stream().filter(t -> trainId.equals(t.getTrain().getId())).toList();
+        }
+        if (fromStationId != null) {
+            all = all.stream().filter(t -> fromStationId.equals(t.getFromStation().getId())).toList();
+        }
+        if (toStationId != null) {
+            all = all.stream().filter(t -> toStationId.equals(t.getToStation().getId())).toList();
         }
         if (date != null) {
             all = all.stream().filter(t -> {
@@ -123,6 +138,8 @@ public class TripAdminController {
             m.put("departure_time",  t.getDepartureDatetime());
             m.put("arrival_time",    t.getArrivalDatetime());
             m.put("status",          effectiveStatus.apply(t));
+            m.put("is_hidden",       Boolean.TRUE.equals(t.getIsHidden()));
+            m.put("has_real_booking", seatBookingRepo.existsRealBookingByTripId(t.getId()));
             long confirmedBookings = seatBookingRepo.findByTripIdAndStatus(t.getId(), "confirmed").size();
             m.put("confirmed_bookings", confirmedBookings);
             return m;
@@ -413,5 +430,68 @@ public class TripAdminController {
     public ResponseEntity<?> cancelInfo(@PathVariable Integer tripId) {
         long affected = seatBookingRepo.findByTripIdAndStatus(tripId, "confirmed").size();
         return ResponseEntity.ok(Map.of("affectedOrders", affected));
+    }
+
+    // ─── TOGGLE HIDDEN (ẩn/hiện khỏi search công khai) ──────────────────────────────
+
+    @PutMapping("/{tripId}/toggle-hidden")
+    @Transactional
+    public ResponseEntity<?> toggleHidden(
+            @PathVariable Integer tripId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        TrainTrip trip = tripRepo.findById(tripId).orElse(null);
+        if (trip == null) return ResponseEntity.notFound().build();
+
+        boolean newHidden = !Boolean.TRUE.equals(trip.getIsHidden());
+        trip.setIsHidden(newHidden);
+        tripRepo.save(trip);
+
+        try {
+            Integer adminId = userRepo.findByEmail(userDetails.getUsername()).map(User::getId).orElse(null);
+            adminLogRepo.save(AdminLog.builder()
+                    .adminId(adminId).action(newHidden ? "HIDE_TRIP" : "SHOW_TRIP")
+                    .targetType("trip").targetId(tripId)
+                    .detail((newHidden ? "Ẩn" : "Hiện") + " chuyến " + trip.getTrain().getTrainCode())
+                    .build());
+        } catch (Exception ignored) {}
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "isHidden", newHidden,
+                "message", newHidden ? "Đã ẩn chuyến khỏi tìm kiếm" : "Đã hiện lại chuyến"));
+    }
+
+    // ─── DELETE (chỉ khi chưa có vé thật bán) ───────────────────────────────────────
+
+    @DeleteMapping("/{tripId}")
+    @Transactional
+    public ResponseEntity<?> delete(
+            @PathVariable Integer tripId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        TrainTrip trip = tripRepo.findById(tripId).orElse(null);
+        if (trip == null) return ResponseEntity.notFound().build();
+
+        // Chặn xóa nếu có vé thật (ticket_price > 0)
+        if (seatBookingRepo.existsRealBookingByTripId(tripId)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Chuyến đã có vé bán, không thể xóa"));
+        }
+
+        String trainCode = trip.getTrain().getTrainCode();
+        // Xóa mock booking + trip_seats + trip_carriages + trip_segment_prices, rồi xóa trip
+        upsertService.purgeCrawledData(tripId);
+        tripRepo.delete(trip);
+
+        try {
+            Integer adminId = userRepo.findByEmail(userDetails.getUsername()).map(User::getId).orElse(null);
+            adminLogRepo.save(AdminLog.builder()
+                    .adminId(adminId).action("DELETE_TRIP")
+                    .targetType("trip").targetId(tripId)
+                    .detail("Xóa chuyến " + trainCode + " (id=" + tripId + ")")
+                    .build());
+        } catch (Exception ignored) {}
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Đã xóa chuyến"));
     }
 }

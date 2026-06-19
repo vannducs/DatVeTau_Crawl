@@ -29,6 +29,8 @@ public class TrainAdminController {
     private final AdminLogRepository     adminLogRepo;
     private final UserRepository         userRepo;
     private final TripService            tripService;
+    private final TripCarriageRepository carriageRepo;
+    private final TripSeatRepository     seatRepo;
 
     private boolean hasActiveTrip(Integer trainId) {
         return tripRepo.existsByTrainIdAndStatusAndArrivalDatetimeAfter(trainId, "open", OffsetDateTime.now());
@@ -57,6 +59,10 @@ public class TrainAdminController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * READ-ONLY: hiển thị thông tin tàu + toa/ghế lấy từ chuyến gần nhất của tàu.
+     * Schema mới quản lý toa/ghế per-trip (crawl Vexere) nên dùng chuyến mới nhất làm đại diện.
+     */
     @GetMapping("/trains/{trainId}")
     public ResponseEntity<?> trainDetail(@PathVariable Integer trainId) {
         Train train = trainRepo.findById(trainId).orElse(null);
@@ -68,7 +74,32 @@ public class TrainAdminController {
         result.put("train_name", train.getTrainName());
         result.put("train_type", "express");
         result.put("status",     train.getStatus());
-        result.put("carriages",  List.of());
+
+        List<Map<String, Object>> carriages = new ArrayList<>();
+        tripRepo.findTopByTrainIdOrderByDepartureDatetimeDesc(trainId).ifPresent(trip -> {
+            for (TripCarriage tc : carriageRepo.findByTripIdOrderByCarriageOrder(trip.getId())) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",              tc.getId());
+                m.put("carriage_number", tc.getCarriageOrder());
+                m.put("carriage_type",   tc.getCarriageType());
+                m.put("carriage_model",  tc.getCarriageModel());
+                m.put("carriage_name",   tc.getCarriageName());
+                m.put("total_seats",     tc.getTotalSeats());
+                m.put("available_seats", tc.getAvailableSeats());
+                List<Map<String, Object>> seats = seatRepo.findByTripCarriageIdOrderBySeatNumber(tc.getId())
+                        .stream().map(s -> {
+                            Map<String, Object> sm = new LinkedHashMap<>();
+                            sm.put("id",             s.getId());
+                            sm.put("seat_number",    s.getSeatNumber());
+                            sm.put("berth_position", s.getBerthPosition());
+                            sm.put("status",         s.getStatus());
+                            return sm;
+                        }).collect(Collectors.toList());
+                m.put("seats", seats);
+                carriages.add(m);
+            }
+        });
+        result.put("carriages", carriages);
         return ResponseEntity.ok(result);
     }
 

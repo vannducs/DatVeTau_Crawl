@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
+
 interface StatCardProps {
     label:    string;
     value:    string | number;
-    icon:     string;
+    icon:     ReactNode;   // react-icons component, vd <MdPeople />
     color:    string;
     sub?:     string;
 }
@@ -9,8 +11,8 @@ interface StatCardProps {
 export default function StatCard({ label, value, icon, color, sub }: StatCardProps) {
     return (
         <div className="admin-stat-card">
-            <div className="admin-stat-icon" style={{ background: color + "1A" }}>
-                <span style={{ fontSize: 22 }}>{icon}</span>
+            <div className="admin-stat-icon" style={{ background: color + "1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {icon}
             </div>
             <div>
                 <div className="admin-stat-label">{label}</div>

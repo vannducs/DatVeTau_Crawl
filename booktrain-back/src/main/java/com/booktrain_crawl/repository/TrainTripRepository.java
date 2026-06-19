@@ -35,6 +35,7 @@ public interface TrainTripRepository extends JpaRepository<TrainTrip, Integer> {
         JOIN FETCH t.fromStation
         JOIN FETCH t.toStation
         WHERE t.status = 'open'
+          AND t.isHidden = false
           AND t.fromStation.id = :fromId
           AND t.toStation.id   = :toId
           AND CAST(t.departureDatetime AS date) = :date

@@ -52,7 +52,11 @@ public class TrainAdminController {
             m.put("train_name",      t.getTrainName());
             m.put("train_type",      "express");
             m.put("status",          t.getStatus());
-            m.put("carriage_count",  0);
+            // Số toa thật = số toa của chuyến gần nhất (mỗi trip lặp lại cùng cấu hình toa)
+            int carriageCount = tripRepo.findTopByTrainIdOrderByDepartureDatetimeDesc(t.getId())
+                    .map(trip -> (int) carriageRepo.countByTripId(trip.getId()))
+                    .orElse(0);
+            m.put("carriage_count",  carriageCount);
             m.put("has_active_trip", hasActiveTrip(t.getId()));
             return m;
         }).collect(Collectors.toList());

@@ -31,7 +31,7 @@ export default function LocationsPage() {
         <div>
             <div className="admin-page-header">
                 <div>
-                    <div className="admin-page-title">Quản lý ga tàu</div>
+                    <div className="admin-page-title">Danh mục ga</div>
                     <div className="admin-page-subtitle">
                         Danh sách ga trên tuyến (chỉ xem)
                     </div>

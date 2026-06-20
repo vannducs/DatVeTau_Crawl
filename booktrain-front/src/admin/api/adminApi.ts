@@ -20,19 +20,11 @@ export const dashboardApi = {
     trainOccupancy: () => api.get("/dashboard/train-occupancy"),
 };
 
-// ─── Trains ──────────────────────────────────────────────────────────────────
-// ĐỢT 1 cleanup: đã bỏ các method trỏ endpoint đã xóa (carriage/seat CRUD + validate
-// + carriages) vì schema mới quản lý toa/ghế qua crawler Vexere, không CRUD thủ công.
+// ─── Trains (ĐỢT 2: Danh mục tàu — READ-ONLY) ──────────────────────────────────
+// Dữ liệu tàu/toa/ghế từ crawler Vexere, không CRUD thủ công → chỉ còn list + detail.
 export const trainAdminApi = {
-    list:             ()                          => api.get("/trains"),
-    detail:           (id: number)                => api.get(`/trains/${id}`),
-    create:           (body: object)              => api.post("/trains", body),
-    update:           (id: number, body: object)  => api.put(`/trains/${id}`, body),
-    delete:           (id: number)                => api.delete(`/trains/${id}`),
-    tripStatus:       (trainId: number)           => api.get(`/trains/${trainId}/trip-status`),
-    availableStations:(trainId: number)           => api.get(`/trains/${trainId}/available-stations`),
-    scheduleDuration: (trainId: number, originId: number, destinationId: number) =>
-        api.get(`/trains/${trainId}/schedule-duration`, { params: { originId, destinationId } }),
+    list:   ()             => api.get("/trains"),
+    detail: (id: number)   => api.get(`/trains/${id}`),
 };
 
 // ─── Trips (ĐỢT 2B: quản lý chuyến đã crawl — read-only + ẩn/xóa) ───────────────

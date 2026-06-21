@@ -26,7 +26,6 @@ public class VNPayService {
     private String returnUrl;
 
     public String createPaymentUrl(long amount, String orderCode, String orderInfo, String ipAddress) {
-        // VNPay sandbox không chấp nhận IPv6 localhost
         if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "::1".equals(ipAddress)) {
             ipAddress = "127.0.0.1";
         }

@@ -28,7 +28,7 @@ public class VexereSeatDetailResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CoachSeatTemplate {
         @JsonProperty("coach_num")
-        private Integer coachNum;   // tier/floor index (1=lower, 2=middle, 3=upper for sleeper)
+        private Integer coachNum;   
 
         @JsonProperty("seats")
         private List<Seat> seats;
@@ -48,15 +48,14 @@ public class VexereSeatDetailResponse {
     @lombok.Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TrainData {
-        @JsonProperty("ChoSo")   private Integer choSo;    // số ghế thật (1..64)
-        @JsonProperty("LoaiCho") private String  loaiCho;  // "NML", "NMLV", ...
-        @JsonProperty("GiaVe")   private Long    giaVe;    // nghìn đồng (765 = 765,000đ)
-        @JsonProperty("Status")  private SeatStatus status;
+        @JsonProperty("ChoSo")   private Integer choSo;    
+        @JsonProperty("LoaiCho") private String  loaiCho;  
+        @JsonProperty("GiaVe")   private Long    giaVe;    
     }
 
     @lombok.Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SeatStatus {
-        @JsonProperty("Status") private Integer status; // 1=available, 3=booked
+        @JsonProperty("Status") private Integer status; 
     }
 }

@@ -54,13 +54,9 @@ public class VexereCrawlerService {
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setPropertyNamingStrategy(com.fasterxml.jackson.databind.PropertyNamingStrategies.LOWER_CAMEL_CASE);
 
-    /** Result returned per crawlAndSave call — used by CrawlerController.triggerAll */
     public record CrawlResult(int tripsFound, int tripsSaved, int totalCarriages, int totalSeats, String status) {}
 
-    /**
-     * Crawl một tuyến một ngày.
-     * @param vexereToken Bearer token; null → không gửi header Authorization
-     */
+
     public CrawlResult crawlAndSave(String fromVexereCode, String toVexereCode,
                                     LocalDate date, String vexereToken) {
         long start = System.currentTimeMillis();
@@ -128,12 +124,10 @@ public class VexereCrawlerService {
                         ? tripRepo.findByVexereIdIndex(item.getIdIndex())
                         : Optional.empty();
 
-                // ── UPSERT: trip đã tồn tại → cập nhật ──────────────────────────────
                 if (existingOpt.isPresent()) {
                     TrainTrip existing = existingOpt.get();
                     boolean hasRealBooking = seatBookingRepo.existsRealBookingByTripId(existing.getId());
 
-                    // Luôn cập nhật field trip-level (giờ, giá, available, crawled_at)
                     applyTripFields(existing, item, fromStation, toStation, date);
                     tripRepo.save(existing);
 
@@ -161,7 +155,6 @@ public class VexereCrawlerService {
                     continue;
                 }
 
-                // ── Trip mới → tạo mới ──────────────────────────────────────────────
                 try {
                     saveTripData(item, fromStation, toStation, date, bookingCode, token);
                     tripsSaved++;

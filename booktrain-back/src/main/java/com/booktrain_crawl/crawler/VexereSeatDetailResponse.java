@@ -48,9 +48,10 @@ public class VexereSeatDetailResponse {
     @lombok.Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TrainData {
-        @JsonProperty("ChoSo")   private Integer choSo;    
-        @JsonProperty("LoaiCho") private String  loaiCho;  
-        @JsonProperty("GiaVe")   private Long    giaVe;    
+        @JsonProperty("ChoSo")   private Integer choSo;
+        @JsonProperty("LoaiCho") private String  loaiCho;
+        @JsonProperty("GiaVe")   private Long    giaVe;
+        @JsonProperty("Status")  private SeatStatus status; // object lồng { "Status": Integer } — 3 = đã bán
     }
 
     @lombok.Data

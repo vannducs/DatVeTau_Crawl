@@ -44,9 +44,11 @@ public class TrainTrip {
     private Long maxPrice;
 
     @Column(name = "total_seats")
+    @Builder.Default
     private Integer totalSeats = 0;
 
     @Column(name = "available_seats")
+    @Builder.Default
     private Integer availableSeats = 0;
 
     @Column(name = "vexere_id_index", unique = true, length = 60)

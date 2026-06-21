@@ -20,7 +20,6 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +46,7 @@ public class TripAdminController {
     private final CrawlerUpsertService       upsertService;
 
     private static String formatCurrency(java.math.BigDecimal amount) {
-        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        NumberFormat nf = NumberFormat.getInstance(Locale.of("vi", "VN"));
         return nf.format(amount) + "đ";
     }
 

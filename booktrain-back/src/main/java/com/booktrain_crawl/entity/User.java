@@ -41,6 +41,7 @@ public class User {
     private String accountType; // "customer" | "partner" | "admin"
 
     @Column(nullable = false, length = 20)
+    @Builder.Default
     private String status = "active"; // "active" | "locked" | "pending"
 
     @Column(name = "created_at", updatable = false)

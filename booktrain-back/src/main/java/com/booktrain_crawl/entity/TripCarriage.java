@@ -37,9 +37,11 @@ public class TripCarriage {
     private String seatGroup; // NGM | NAC | NAM
 
     @Column(name = "total_seats", nullable = false)
+    @Builder.Default
     private Integer totalSeats = 0;
 
     @Column(name = "available_seats", nullable = false)
+    @Builder.Default
     private Integer availableSeats = 0;
 
     @Column(name = "min_price")

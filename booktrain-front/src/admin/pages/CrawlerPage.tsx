@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MdCloudDownload, MdBuild, MdHistory, MdRefresh, MdSync, MdInfo, MdCheckCircle } from "react-icons/md";
 import { crawlerApi } from "../api/adminApi";
 import "./crawler.css";
 
@@ -126,9 +127,7 @@ export default function CrawlerPage() {
             {/* ── PHẦN 1: Form cấu hình ──────────────────────────────────────── */}
             <div className="crawler-card">
                 <div className="crawler-card-title">
-                    <span className="material-icons-round" style={{ color: "#2F6FED", fontSize: 20 }}>
-                        cloud_download
-                    </span>
+                    <MdCloudDownload style={{ color: "#2F6FED" }} size={20} />
                     Cào dữ liệu từ Vexere
                 </div>
 
@@ -205,12 +204,9 @@ export default function CrawlerPage() {
                         onClick={handleCrawl}
                         disabled={loading || repairing || (crawlMode === "date" && !specificDate)}
                     >
-                        <span
-                            className={`material-icons-round${loading ? " spin" : ""}`}
-                            style={{ fontSize: 18 }}
-                        >
-                            {loading ? "sync" : "cloud_download"}
-                        </span>
+                        {loading
+                            ? <MdSync className="spin" size={18} />
+                            : <MdCloudDownload size={18} />}
                         {loading ? "Đang cào dữ liệu..." : "Bắt đầu cào dữ liệu"}
                     </button>
 
@@ -220,12 +216,9 @@ export default function CrawlerPage() {
                         disabled={repairing || loading}
                         style={{ background: repairing ? "#6b7280" : "#f59e0b" }}
                     >
-                        <span
-                            className={`material-icons-round${repairing ? " spin" : ""}`}
-                            style={{ fontSize: 18 }}
-                        >
-                            {repairing ? "sync" : "build"}
-                        </span>
+                        {repairing
+                            ? <MdSync className="spin" size={18} />
+                            : <MdBuild size={18} />}
                         {repairing ? "Đang sửa..." : "Sửa chuyến rỗng"}
                     </button>
                 </div>
@@ -248,7 +241,7 @@ export default function CrawlerPage() {
                 {loading && (
                     <div>
                         <div className="crawler-loading-hint">
-                            <span className="material-icons-round" style={{ fontSize: 16 }}>info</span>
+                            <MdInfo size={16} />
                             Quá trình crawl có thể mất vài phút tùy số tuyến và số ngày. Vui lòng không đóng trang.
                         </div>
                         <div className="crawler-progress-bar">
@@ -262,9 +255,7 @@ export default function CrawlerPage() {
             {crawlResult && (
                 <div className="crawler-card">
                     <div className="crawler-card-title">
-                        <span className="material-icons-round" style={{ color: "#10b981", fontSize: 20 }}>
-                            check_circle
-                        </span>
+                        <MdCheckCircle style={{ color: "#10b981" }} size={20} />
                         Kết quả crawl vừa thực hiện
                     </div>
 
@@ -321,9 +312,7 @@ export default function CrawlerPage() {
             {/* ── PHẦN 3: Lịch sử crawl ──────────────────────────────────────── */}
             <div className="crawler-card">
                 <div className="crawler-card-title">
-                    <span className="material-icons-round" style={{ color: "#6b7280", fontSize: 20 }}>
-                        history
-                    </span>
+                    <MdHistory style={{ color: "#6b7280" }} size={20} />
                     Lịch sử crawl
                     <button
                         onClick={() => fetchHistory(historyPage)}
@@ -340,7 +329,7 @@ export default function CrawlerPage() {
                             gap: 4,
                         }}
                     >
-                        <span className="material-icons-round" style={{ fontSize: 14 }}>refresh</span>
+                        <MdRefresh size={14} />
                         Làm mới
                     </button>
                 </div>

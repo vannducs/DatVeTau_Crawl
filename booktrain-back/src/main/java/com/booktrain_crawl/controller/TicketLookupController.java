@@ -1,6 +1,7 @@
 package com.booktrain_crawl.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
@@ -96,6 +98,8 @@ public class TicketLookupController {
         result.put("transactionCode", payment != null ? payment.getTransactionCode() : null);
         result.put("paidAt",          payment != null && payment.getPaidAt() != null
                                       ? fmtVN(payment.getPaidAt()) : null);
+
+        log.info("[TICKET API] orderCode={} items={} passengers={}", orderCode, items.size(), passengers);
 
         return ResponseEntity.ok(result);
     }

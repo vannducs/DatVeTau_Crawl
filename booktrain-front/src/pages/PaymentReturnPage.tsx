@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import TicketPrint from "../components/TicketPrint";
-import type { TicketTripInfo } from "../components/TicketPrint";
+import type { TicketTripInfo, TicketPassenger } from "../components/TicketPrint";
 import "./Payment.css";
 
 interface PassengerForm {
-    seatId: number;
+    tripSeatId: number;        // bookingData lưu tripSeatId (không phải seatId)
     seatNumber: string;
     carriageType: string;
-    carriageNumber: number;
+    carriageOrder: number;     // bookingData lưu carriageOrder (KHÔNG phải carriageNumber)
     ticketPrice: number;
     passengerName: string;
     idNumber: string;
@@ -74,6 +74,7 @@ export default function PaymentReturnPage() {
     const [result,      setResult]      = useState<VerifyResult | null>(null);
     const [bookingData, setBookingData] = useState<BookingData | null>(null);
     const [tripInfo,    setTripInfo]    = useState<TicketTripInfo | null>(null);
+    const [apiPassengers, setApiPassengers] = useState<TicketPassenger[] | null>(null);
     const [copied,      setCopied]      = useState(false);
     const [showPreview, setShowPreview] = useState(false);
 
@@ -110,31 +111,40 @@ export default function PaymentReturnPage() {
                     }
                     sessionStorage.removeItem("bookingData");
 
-                    // Fetch trip info for ticket printing
-                    if (parsed?.tripId && parsed?.fromStationId && parsed?.toStationId) {
+                    // Lấy chi tiết vé từ backend (/api/tickets/{orderCode}) — nguồn chuẩn
+                    // có đầy đủ SỐ TOA + thông tin chuyến (đã format giờ VN). Tránh dựa vào
+                    // bookingData (sessionStorage) vốn thiếu carriageNumber.
+                    if (data.orderCode) {
                         try {
-                            const tripRes = await axios.get(`/api/trips/${parsed.tripId}`, {
-                                params: {
-                                    fromStationId: parsed.fromStationId,
-                                    toStationId: parsed.toStationId,
-                                },
-                            });
-                            const d = tripRes.data;
-                            // Map TripResultDTO → TicketTripInfo
+                            const tk = await axios.get(`/api/tickets/${data.orderCode}`);
+                            const td = tk.data;
+                            console.log("[TICKET FETCH] orderCode=", data.orderCode, "response=", td);
                             setTripInfo({
-                                trainCode:       d.trainCode ?? "",
-                                trainName:       d.trainName ?? "",
-                                originName:      d.fromStationName ?? "",
-                                destinationName: d.toStationName ?? "",
-                                departureTime:   d.boardDate && d.boardTime
-                                    ? `${d.boardDate.split('/').reverse().join('-')}T${d.boardTime}:00`
-                                    : "",
-                                arrivalTime:     d.alightDate && d.alightTime
-                                    ? `${d.alightDate.split('/').reverse().join('-')}T${d.alightTime}:00`
-                                    : "",
+                                trainCode:       td.trainCode ?? "",
+                                trainName:       td.trainName ?? "",
+                                originName:      td.originName ?? "",
+                                destinationName: td.destinationName ?? "",
+                                departureTime:   td.departureTime ?? "",
+                                arrivalTime:     td.arrivalTime ?? "",
                             });
-                        } catch {
-                            // Non-critical: ticket still renders without trip info
+                            if (Array.isArray(td.passengers) && td.passengers.length > 0) {
+                                const mapped = td.passengers.map((pp: {
+                                    passengerName: string; idNumber: string; seatNumber: string;
+                                    carriageNumber: number; carriageType: string; ticketPrice: number;
+                                }) => ({
+                                    passengerName:  pp.passengerName,
+                                    idNumber:       pp.idNumber,
+                                    seatNumber:     pp.seatNumber,
+                                    carriageNumber: pp.carriageNumber,
+                                    carriageType:   pp.carriageType,
+                                    ticketPrice:    Number(pp.ticketPrice) || 0,
+                                }));
+                                console.log("[TICKET FETCH] mapped passengers=", mapped);
+                                setApiPassengers(mapped);
+                            }
+                        } catch (err) {
+                            console.error("[TICKET FETCH] failed for orderCode=", data.orderCode, err);
+                            // Non-critical: vé vẫn render từ bookingData (đã map carriageOrder→carriageNumber)
                         }
                     }
                 }
@@ -151,6 +161,18 @@ export default function PaymentReturnPage() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     }
+
+    // Nguồn hành khách cho vé: ưu tiên data từ API (/api/tickets có SỐ TOA thật),
+    // fallback bookingData (sessionStorage) — LƯU Ý: bookingData dùng field carriageOrder.
+    const ticketPassengers: TicketPassenger[] = apiPassengers
+        ?? (bookingData?.passengers.map(p => ({
+            passengerName:  p.passengerName,
+            idNumber:       p.idNumber,
+            seatNumber:     p.seatNumber,
+            carriageNumber: p.carriageOrder,   // map carriageOrder → carriageNumber
+            carriageType:   p.carriageType,
+            ticketPrice:    p.ticketPrice,
+        })) ?? []);
 
     return (
         <>
@@ -245,15 +267,15 @@ export default function PaymentReturnPage() {
                                 )}
 
                                 {/* Card 3: Hành khách */}
-                                {bookingData && bookingData.passengers.length > 0 && (
+                                {ticketPassengers.length > 0 && (
                                     <div className="pay-summary-card">
                                         <div className="pay-summary-header">
                                             <h3>Thông tin hành khách</h3>
                                         </div>
-                                        {bookingData.passengers.map((p, i) => (
+                                        {ticketPassengers.map((p, i) => (
                                             <div key={i} style={{
                                                 padding: "12px 0",
-                                                borderBottom: i < bookingData.passengers.length - 1
+                                                borderBottom: i < ticketPassengers.length - 1
                                                     ? "1px solid #F3F4F6" : "none",
                                             }}>
                                                 <div style={{ fontWeight: 600, marginBottom: 4 }}>
@@ -409,14 +431,7 @@ export default function PaymentReturnPage() {
             {result?.success && bookingData && (
                 <TicketPrint
                     orderCode={result.orderCode ?? ""}
-                    passengers={bookingData.passengers.map(p => ({
-                        passengerName:  p.passengerName,
-                        idNumber:       p.idNumber,
-                        seatNumber:     p.seatNumber,
-                        carriageNumber: p.carriageNumber,
-                        carriageType:   p.carriageType,
-                        ticketPrice:    p.ticketPrice,
-                    }))}
+                    passengers={ticketPassengers}
                     tripInfo={tripInfo}
                     totalAmount={result.amount ?? 0}
                 />
@@ -447,14 +462,7 @@ export default function PaymentReturnPage() {
                         </div>
                         <TicketPrint
                             orderCode={result.orderCode ?? ""}
-                            passengers={bookingData.passengers.map(p => ({
-                                passengerName:  p.passengerName,
-                                idNumber:       p.idNumber,
-                                seatNumber:     p.seatNumber,
-                                carriageNumber: p.carriageNumber,
-                                carriageType:   p.carriageType,
-                                ticketPrice:    p.ticketPrice,
-                            }))}
+                            passengers={ticketPassengers}
                             tripInfo={tripInfo}
                             totalAmount={result.amount ?? 0}
                         />

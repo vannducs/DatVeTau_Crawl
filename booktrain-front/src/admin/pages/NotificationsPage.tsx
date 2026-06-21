@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MdPerson } from "react-icons/md";
 import { notificationAdminApi } from "../api/adminApi";
 import axios from "axios";
 
@@ -144,7 +145,7 @@ export default function NotificationsPage() {
                                     background: "#EFF6FF", border: "1px solid #BFDBFE",
                                     borderRadius: 8, padding: "8px 12px"
                                 }}>
-                                    <span className="material-icons-round" style={{ fontSize: 16, color: "#2F6FED" }}>person</span>
+                                    <MdPerson size={20} style={{ color: "#2F6FED", flexShrink: 0 }} />
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 600, fontSize: 13 }}>{selUser.full_name}</div>
                                         <div style={{ fontSize: 12, color: "#6B7280" }}>{selUser.email}</div>

@@ -36,6 +36,10 @@ public class Payment {
     @Column(name = "paid_at")
     private OffsetDateTime paidAt;
 
+    // Lý do hoàn tiền (admin nhập khi refund); ddl-auto=update tự tạo cột
+    @Column(name = "refund_reason", columnDefinition = "TEXT")
+    private String refundReason;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

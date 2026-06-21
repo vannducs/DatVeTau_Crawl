@@ -5,6 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import com.booktrain_crawl.entity.Notification;
+import com.booktrain_crawl.repository.NotificationRepository;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +18,7 @@ import java.util.Map;
 public class PaymentAdminController {
 
     private final JdbcTemplate jdbc;
+    private final NotificationRepository notificationRepo;
 
     /**
      * GET /api/admin/payments
@@ -78,9 +82,20 @@ public class PaymentAdminController {
         return ResponseEntity.ok(rows.get(0));
     }
 
-    /** PUT /api/admin/payments/{id}/refund */
+    /** PUT /api/admin/payments/{id}/refund  body: { "reason": "..." } */
     @PutMapping("/{id}/refund")
-    public ResponseEntity<Map<String, Object>> refund(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> refund(
+            @PathVariable Integer id,
+            @RequestBody(required = false) Map<String, String> body) {
+
+        // Bắt buộc nhập lý do hoàn tiền
+        String reason = body != null ? body.get("reason") : null;
+        if (reason == null || reason.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("success", false, "message", "Vui lòng nhập lý do hoàn tiền"));
+        }
+        reason = reason.trim();
+
         List<Map<String, Object>> payments = jdbc.queryForList(
                 "SELECT status, order_id FROM payments WHERE id = ?", id);
         if (payments.isEmpty()) return ResponseEntity.notFound().build();
@@ -92,8 +107,46 @@ public class PaymentAdminController {
         }
 
         Object orderId = payments.get(0).get("order_id");
-        jdbc.update("UPDATE payments SET status = 'refunded' WHERE id = ?", id);
+
+        // ── Logic hoàn tiền cũ (giữ nguyên) + lưu reason ──
+        jdbc.update("UPDATE payments SET status = 'refunded', refund_reason = ? WHERE id = ?", reason, id);
         jdbc.update("UPDATE orders   SET status = 'cancelled', updated_at = NOW() WHERE id = ?", orderId);
+
+        // ── Thông báo cho khách hàng của đơn ──
+        try {
+            List<Map<String, Object>> info = jdbc.queryForList("""
+                    SELECT o.customer_id, o.order_code, p.amount
+                    FROM payments p JOIN orders o ON o.id = p.order_id
+                    WHERE p.id = ?
+                    """, id);
+            if (!info.isEmpty()) {
+                Map<String, Object> row = info.get(0);
+                Integer userId = row.get("customer_id") != null
+                        ? ((Number) row.get("customer_id")).intValue() : null;
+                String orderCode = String.valueOf(row.get("order_code"));
+                Object amount    = row.get("amount");
+                String amountStr = amount != null
+                        ? java.text.NumberFormat.getInstance(java.util.Locale.of("vi", "VN"))
+                            .format(amount) + "đ"
+                        : "";
+
+                if (userId != null) {
+                    notificationRepo.save(Notification.builder()
+                            .userId(userId)
+                            .title("Hoàn tiền đơn hàng " + orderCode)
+                            .body("Đơn hàng " + orderCode
+                                    + (amountStr.isEmpty() ? "" : " (" + amountStr + ")")
+                                    + " đã được hoàn tiền.\n"
+                                    + "Lý do: " + reason + "\n"
+                                    + "Số tiền sẽ được hoàn về tài khoản ngân hàng của quý khách "
+                                    + "trong vòng 3-5 ngày làm việc.")
+                            .notiType("refund")
+                            .build());
+                }
+            }
+        } catch (Exception ignored) {
+            // Không chặn luồng hoàn tiền nếu tạo thông báo lỗi
+        }
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Đã hoàn tiền và huỷ đơn hàng"));
     }

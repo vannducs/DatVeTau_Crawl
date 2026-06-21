@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { paymentAdminApi } from "../api/adminApi";
 
 interface Payment {
@@ -30,6 +31,12 @@ export default function PaymentsPage() {
     const [msg,          setMsg]          = useState("");
     const SIZE = 20;
 
+    // Modal hoàn tiền
+    const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
+    const [refundReason, setRefundReason] = useState("");
+    const [refundError,  setRefundError]  = useState("");
+    const [refunding,    setRefunding]    = useState(false);
+
     async function fetchPayments(p = page) {
         setLoading(true);
         try {
@@ -44,15 +51,32 @@ export default function PaymentsPage() {
 
     function handleFilter() { setPage(0); fetchPayments(0); }
 
-    async function handleRefund(id: number, code: string) {
-        if (!confirm(`Hoàn tiền cho đơn "${code}"?\nĐơn hàng sẽ bị huỷ.`)) return;
-        try {
-            await paymentAdminApi.refund(id);
-            setMsg("Đã hoàn tiền thành công");
-            fetchPayments(page);
-        } catch {
-            setMsg("Không thể hoàn tiền. Chỉ hoàn được giao dịch thành công.");
+    function openRefund(p: Payment) {
+        setRefundTarget(p);
+        setRefundReason("");
+        setRefundError("");
+    }
+
+    async function handleRefundConfirm() {
+        if (!refundTarget) return;
+        if (!refundReason.trim()) {
+            setRefundError("Vui lòng nhập lý do hoàn tiền");
+            return;
         }
+        setRefunding(true);
+        setRefundError("");
+        try {
+            await paymentAdminApi.refund(refundTarget.id, refundReason.trim());
+            setRefundTarget(null);
+            setMsg("Đã hoàn tiền thành công và gửi thông báo cho khách hàng");
+            fetchPayments(page);
+        } catch (e) {
+            setRefundError(
+                axios.isAxiosError(e)
+                    ? (e.response?.data?.message ?? "Không thể hoàn tiền")
+                    : "Không thể hoàn tiền"
+            );
+        } finally { setRefunding(false); }
     }
 
     const totalPages = Math.ceil(total / SIZE);
@@ -137,7 +161,7 @@ export default function PaymentsPage() {
                                     <td>
                                         {p.status === "success" && (
                                             <button className="admin-btn admin-btn-warning admin-btn-sm"
-                                                onClick={() => handleRefund(p.id, p.order_code)}>
+                                                onClick={() => openRefund(p)}>
                                                 Hoàn tiền
                                             </button>
                                         )}
@@ -159,6 +183,57 @@ export default function PaymentsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Modal hoàn tiền ── */}
+            {refundTarget && (
+                <div className="admin-modal-overlay" onClick={() => !refunding && setRefundTarget(null)}>
+                    <div className="admin-modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+                        <div className="admin-modal-header">
+                            <span className="admin-modal-title">
+                                Hoàn tiền cho đơn {refundTarget.order_code}
+                            </span>
+                            <button className="admin-modal-close"
+                                onClick={() => !refunding && setRefundTarget(null)}>✕</button>
+                        </div>
+
+                        <div className="admin-alert" style={{ background: "#FFF7ED", border: "1px solid #FED7AA", color: "#9A3412", marginBottom: 12 }}>
+                            Đơn hàng sẽ bị huỷ và gửi thông báo hoàn tiền đến khách hàng.
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", rowGap: 6, fontSize: 14, marginBottom: 16 }}>
+                            <span style={{ color: "#6B7280" }}>Khách hàng:</span>
+                            <span style={{ fontWeight: 600 }}>{refundTarget.customer_name}</span>
+                            <span style={{ color: "#6B7280" }}>Số tiền:</span>
+                            <span style={{ fontWeight: 700, color: "#DC2626" }}>
+                                {Number(refundTarget.amount).toLocaleString("vi-VN")}đ
+                            </span>
+                        </div>
+
+                        <div className="admin-form-group">
+                            <label className="admin-form-label">Lý do hoàn tiền *</label>
+                            <textarea className="admin-form-input" rows={3}
+                                placeholder="Nhập lý do hoàn tiền (sẽ gửi đến khách hàng)..."
+                                value={refundReason}
+                                onChange={e => { setRefundReason(e.target.value); if (refundError) setRefundError(""); }}
+                                style={{ resize: "vertical" }} />
+                        </div>
+
+                        {refundError && <div className="admin-alert admin-alert-error">{refundError}</div>}
+
+                        <div className="admin-modal-actions">
+                            <button className="admin-btn admin-btn-outline"
+                                onClick={() => setRefundTarget(null)} disabled={refunding}>
+                                Hủy
+                            </button>
+                            <button className="admin-btn admin-btn-warning"
+                                onClick={handleRefundConfirm}
+                                disabled={refunding || !refundReason.trim()}>
+                                {refunding ? "Đang xử lý..." : "Xác nhận hoàn tiền"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

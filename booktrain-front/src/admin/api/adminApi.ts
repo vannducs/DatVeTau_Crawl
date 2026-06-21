@@ -52,7 +52,7 @@ export const userAdminApi = {
 export const paymentAdminApi = {
     list:   (params: object) => api.get("/payments", { params }),
     detail: (id: number)     => api.get(`/payments/${id}`),
-    refund: (id: number)     => api.put(`/payments/${id}/refund`),
+    refund: (id: number, reason: string) => api.put(`/payments/${id}/refund`, { reason }),
 };
 
 // ─── Notifications ───────────────────────────────────────────────────────────
